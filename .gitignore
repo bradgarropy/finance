@@ -1,0 +1,25 @@
+# dependencies
+/node_modules
+
+# build
+/.cache
+/build
+/public/build
+
+# cloudflare
+/.wrangler
+worker-configuration.d.ts
+
+# react router
+/.react-router
+
+# test
+/coverage
+/test-results
+/playwright-report
+
+# secrets
+.env
+
+# os
+.DS_Store

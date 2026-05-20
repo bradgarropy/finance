@@ -1,0 +1,20 @@
+# dependencies
+/node_modules
+
+# build
+/.cache
+/build
+/public/build
+
+# cloudflare
+/.wrangler
+worker-configuration.d.ts
+
+# react router
+/.react-router
+
+# test
+/coverage
+
+# secrets
+.env*
