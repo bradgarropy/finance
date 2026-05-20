@@ -6,6 +6,6 @@ import Route from "~/routes/index"
 test("renders", () => {
     render(<Route />)
 
-    expect(document.title).toEqual("📍 react router starter | home")
+    expect(document.title).toEqual("💵 finance | home")
     expect(screen.getByText("Home")).toBeInTheDocument()
 })

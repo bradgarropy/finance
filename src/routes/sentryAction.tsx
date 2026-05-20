@@ -5,7 +5,7 @@ export const action = () => {
 const Route = () => {
     return (
         <>
-            <title>📍 react router starter | sentry</title>
+            <title>💵 finance | sentry</title>
             <h2 className="text-2xl font-bold">Sentry | Action Error</h2>
 
             <form method="post">

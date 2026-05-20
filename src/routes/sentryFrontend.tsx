@@ -1,7 +1,7 @@
 const Route = () => {
     return (
         <>
-            <title>📍 react router starter | sentry</title>
+            <title>💵 finance | sentry</title>
             <h2 className="text-2xl font-bold">Sentry | Frontend Error</h2>
 
             <button

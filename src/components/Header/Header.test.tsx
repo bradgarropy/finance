@@ -11,5 +11,5 @@ test("renders", () => {
         </MemoryRouter>,
     )
 
-    expect(screen.getByText("react router starter")).toBeInTheDocument()
+    expect(screen.getByText("finance")).toBeInTheDocument()
 })

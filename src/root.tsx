@@ -9,7 +9,7 @@ const App = () => {
     return (
         <html lang="en">
             <head>
-                <title>📍 react router starter</title>
+                <title>💵 finance</title>
                 <link rel="stylesheet" href={tailwindStyles} />
                 <link rel="icon" type="image/png" href="/favicon.png" />
                 <meta charSet="utf-8" />
@@ -50,7 +50,7 @@ export const ErrorBoundary = () => {
     return (
         <html lang="en">
             <head>
-                <title>📍 react router starter</title>
+                <title>💵 finance</title>
                 <link rel="stylesheet" href={tailwindStyles} />
                 <link rel="icon" type="image/png" href="/favicon.png" />
                 <meta charSet="utf-8" />
