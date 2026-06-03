@@ -12,8 +12,11 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 
 - Storage: Cloudflare D1 (binding `DB`, db `finance`) via Drizzle ORM.
 - Migrations: Drizzle Kit generates SQL; Wrangler applies it.
-- Auth: Cloudflare Access (Zero Trust), only bradgarropy@gmail.com; server-side
-  verifies `Cf-Access-Authenticated-User-Email`. Implemented + verified FIRST.
+- Auth: Cloudflare Access (Zero Trust), only bradgarropy@gmail.com. The email
+  header is NOT trusted on its own: workers.dev exposure is disabled, Access
+  covers every hostname/route, AND the Access JWT (Cf-Access-Jwt-Assertion) is
+  cryptographically validated server-side before any identity is trusted.
+  Implemented + verified FIRST.
 - Accounts: dynamic table; type = asset | debt | credit.
 - Convention: CURRENT (post-payoff). Checking recorded after cards are paid;
   net worth = assets - debts (all debt-type accounts; Mortgage today); credit
@@ -44,13 +47,26 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 
 ## Phase 1 - Cloudflare Access (lock down FIRST)
 
-- Bind finance.bradgarropy.com as a Workers custom domain.
+- Bind finance.bradgarropy.com as a Workers custom domain. Disable the
+  workers.dev route (`workers_dev: false`) and confirm no other hostname/route
+  reaches the Worker without Access in front - removes the unauthenticated
+  bypass path.
 - Zero Trust > Access > Applications: self-hosted app for the domain; Allow
-  policy email == bradgarropy@gmail.com; default block.
-- `src/utils/auth.ts`: server guard 403s if
-  `Cf-Access-Authenticated-User-Email` != bradgarropy@gmail.com; applied in root
-  loader so every route is protected before features exist.
-- VERIFY: deploy placeholder, confirm only Brad's email passes. No data exposed.
+  policy email == bradgarropy@gmail.com; default block. Record the Application
+  Audience (AUD) tag and team domain.
+- `src/utils/auth.ts`: validate the Access JWT in `Cf-Access-Jwt-Assertion`
+  before trusting any identity:
+  - Fetch + cache team JWKS from
+    https://<team>.cloudflareaccess.com/cdn-cgi/access/certs.
+  - Verify signature, `iss` (team domain), `aud` (app AUD tag), and expiry.
+  - Require verified token email == bradgarropy@gmail.com; 403 otherwise.
+  - Applied in the root loader so every route is protected before features
+    exist. `Cf-Access-Authenticated-User-Email` is only a convenience read
+    AFTER the JWT verifies - never trusted alone.
+  - Store team domain + AUD as Worker vars/secrets.
+- VERIFY: only Brad's email passes via the custom domain; forged email headers
+  and any non-Access request path are rejected (403); confirm workers.dev is
+  unreachable.
 
 ## Phase 2 - Drizzle + schema
 
