@@ -16,8 +16,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   verifies `Cf-Access-Authenticated-User-Email`. Implemented + verified FIRST.
 - Accounts: dynamic table; type = asset | debt | credit.
 - Convention: CURRENT (post-payoff). Checking recorded after cards are paid;
-  net worth = assets - mortgage; credit cards EXCLUDED from net worth and used
-  only for Spending. (Possible future switch noted below.)
+  net worth = assets - debts (all debt-type accounts; Mortgage today); credit
+  cards EXCLUDED from net worth and used only for Spending. (Possible future
+  switch noted below.)
 - History + Constants imported from CSV exports kept OUTSIDE the public repo.
 - Charts: Recharts (client-rendered).
 - Remove the Sentry demo routes.
