@@ -80,11 +80,16 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 - Add deps: `drizzle-orm`, `drizzle-kit` (dev).
 - `drizzle.config.ts`: sqlite dialect; schema `src/db/schema.ts`; out
   `src/db/migrations`.
-- `src/db/schema.ts`: - `accounts(id, name UNIQUE, type 'asset'|'debt'|'credit', sortOrder,
-archived)` - `balances(id, accountId FK, date TEXT, amountCents INT,
-unique(accountId,date))` + index on date. Money = integer cents; debts and credit stored negative. - `settings(key TEXT PK, value TEXT)` - seeded from Constants tab:
-  checking_baseline_cents=2000000, savings_invest_pct=75,
-  savings_save_pct=25, default_window=52, checking_convention=post_payoff.
+- `src/db/schema.ts` defines three tables:
+    - `accounts(id, name UNIQUE, type 'asset'|'debt'|'credit', sortOrder, archived)`
+    - `balances(id, accountId FK, date TEXT, amountCents INT, unique(accountId, date))`, plus an index on `date`
+    - `settings(key TEXT PK, value TEXT)`, seeded from the Constants tab:
+      `checking_baseline_cents=2000000`, `savings_invest_pct=75`,
+      `savings_save_pct=25`, `default_window=52`,
+      `checking_convention=post_payoff`
+    - Money stored as integer cents. Sign convention: assets positive; debts and
+      credit balances negative — consistent with the Data model (net worth = SUM
+      of balances)
 - `src/db/client.ts`: `db(env)` -> `drizzle(env.DB, { schema })`.
 - Generate + apply: `drizzle-kit generate` then
   `wrangler d1 migrations apply finance --local` / `--remote`.
