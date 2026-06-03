@@ -19,9 +19,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   Implemented + verified FIRST.
 - Accounts: dynamic table; type = asset | debt | credit.
 - Convention: CURRENT (post-payoff). Checking recorded after cards are paid;
-  net worth = assets - debts (all debt-type accounts; Mortgage today); credit
-  cards EXCLUDED from net worth and used only for Spending. (Possible future
-  switch noted below.)
+  net worth = sum of asset + debt balances (debts stored negative, so they net
+  out; Mortgage today); credit cards EXCLUDED from net worth and used only for
+  Spending. (Possible future switch noted below.)
 - History + Constants imported from CSV exports kept OUTSIDE the public repo.
 - Charts: Recharts (client-rendered).
 - Remove the Sentry demo routes.
@@ -30,10 +30,14 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 
 - Accounts (Balances tab): Checking, Savings, Emergency, 401k, HSA, Investments
   (assets); Mortgage (debt); NFCU, Apple (credit).
+- Sign convention: assets positive; debts and credit balances negative (matches
+  the spreadsheet). Net worth = SUM of balances. Money stored as integer cents.
 - Weekly entries keyed by date; history back to ~2008.
-- Net worth = assets - debts; credit excluded (checking already reflects weekly
-  payoff; subtracting cards would double-count spend).
-- Weekly spend = sum of credit-type balances that week (no separate table).
+- Net worth = sum of asset + debt balances (debts negative); credit excluded
+  (checking already reflects weekly payoff; subtracting cards would double-count
+  spend).
+- Weekly spend = absolute value of summed credit-type balances that week (credit
+  stored negative; no separate table).
 - Derived, not stored: assets/debt/worth series, growth rates, spend averages,
   savings split.
 
@@ -75,7 +79,7 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   `src/db/migrations`.
 - `src/db/schema.ts`: - `accounts(id, name UNIQUE, type 'asset'|'debt'|'credit', sortOrder,
 archived)` - `balances(id, accountId FK, date TEXT, amountCents INT,
-unique(accountId,date))` + index on date. Money = integer cents; debts neg. - `settings(key TEXT PK, value TEXT)` - seeded from Constants tab:
+unique(accountId,date))` + index on date. Money = integer cents; debts and credit stored negative. - `settings(key TEXT PK, value TEXT)` - seeded from Constants tab:
   checking_baseline_cents=2000000, savings_invest_pct=75,
   savings_save_pct=25, default_window=52, checking_convention=post_payoff.
 - `src/db/client.ts`: `db(env)` -> `drizzle(env.DB, { schema })`.
@@ -151,7 +155,7 @@ Every loader calls the Phase 1 auth guard.
     1. One-time idempotent backfill `scripts/normalize-checking.ts`:
        checking += weekly card totals for each historical week; guarded by the
        `checking_convention` setting so it can't double-apply.
-    2. Net worth formula subtracts credit cards.
+    2. Net worth includes credit-card balances (already negative) in the sum.
     3. Savings calc adjusts BOTH the excess AND the 75/25 split inputs by the
        outstanding card amount (available_checking = checking - outstanding_cards
         - baseline) so transfer recommendations stay accurate.
