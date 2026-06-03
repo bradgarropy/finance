@@ -4,5 +4,8 @@
 declare namespace Cloudflare {
     interface Env {
         SENTRY_DSN: string
+        ACCESS_TEAM_DOMAIN: string
+        ACCESS_AUD: string
+        ACCESS_ALLOWED_EMAIL: string
     }
 }

@@ -5,6 +5,18 @@
     "compatibility_flags": ["nodejs_compat"],
     "keep_vars": true,
     "main": "./src/worker.ts",
+    "workers_dev": false,
+    "routes": [
+        {
+            "pattern": "finance.bradgarropy.com",
+            "custom_domain": true,
+        },
+    ],
+    "vars": {
+        "ACCESS_TEAM_DOMAIN": "https://bradgarropy.cloudflareaccess.com",
+        "ACCESS_AUD": "",
+        "ACCESS_ALLOWED_EMAIL": "bradgarropy@gmail.com",
+    },
     "dev": {
         "port": 3000,
     },
