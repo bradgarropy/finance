@@ -56,14 +56,14 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   Audience (AUD) tag and team domain.
 - `src/utils/auth.ts`: validate the Access JWT in `Cf-Access-Jwt-Assertion`
   before trusting any identity:
-  - Fetch + cache team JWKS from
-    https://<team>.cloudflareaccess.com/cdn-cgi/access/certs.
-  - Verify signature, `iss` (team domain), `aud` (app AUD tag), and expiry.
-  - Require verified token email == bradgarropy@gmail.com; 403 otherwise.
-  - Applied in the root loader so every route is protected before features
-    exist. `Cf-Access-Authenticated-User-Email` is only a convenience read
-    AFTER the JWT verifies - never trusted alone.
-  - Store team domain + AUD as Worker vars/secrets.
+    - Fetch + cache team JWKS from
+      https://<team>.cloudflareaccess.com/cdn-cgi/access/certs.
+    - Verify signature, `iss` (team domain), `aud` (app AUD tag), and expiry.
+    - Require verified token email == bradgarropy@gmail.com; 403 otherwise.
+    - Applied in the root loader so every route is protected before features
+      exist. `Cf-Access-Authenticated-User-Email` is only a convenience read
+      AFTER the JWT verifies - never trusted alone.
+    - Store team domain + AUD as Worker vars/secrets.
 - VERIFY: only Brad's email passes via the custom domain; forged email headers
   and any non-Access request path are rejected (403); confirm workers.dev is
   unreachable.
@@ -73,14 +73,11 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 - Add deps: `drizzle-orm`, `drizzle-kit` (dev).
 - `drizzle.config.ts`: sqlite dialect; schema `src/db/schema.ts`; out
   `src/db/migrations`.
-- `src/db/schema.ts`:
-    - `accounts(id, name UNIQUE, type 'asset'|'debt'|'credit', sortOrder,
-archived)`
-    - `balances(id, accountId FK, date TEXT, amountCents INT,
-unique(accountId,date))` + index on date. Money = integer cents; debts neg.
-    - `settings(key TEXT PK, value TEXT)` - seeded from Constants tab:
-      checking_baseline_cents=2000000, savings_invest_pct=75,
-      savings_save_pct=25, default_window=52, checking_convention=post_payoff.
+- `src/db/schema.ts`: - `accounts(id, name UNIQUE, type 'asset'|'debt'|'credit', sortOrder,
+archived)` - `balances(id, accountId FK, date TEXT, amountCents INT,
+unique(accountId,date))` + index on date. Money = integer cents; debts neg. - `settings(key TEXT PK, value TEXT)` - seeded from Constants tab:
+  checking_baseline_cents=2000000, savings_invest_pct=75,
+  savings_save_pct=25, default_window=52, checking_convention=post_payoff.
 - `src/db/client.ts`: `db(env)` -> `drizzle(env.DB, { schema })`.
 - Generate + apply: `drizzle-kit generate` then
   `wrangler d1 migrations apply finance --local` / `--remote`.
