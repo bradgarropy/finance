@@ -18,7 +18,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   cryptographically validated server-side before any identity is trusted.
   Implemented + verified FIRST.
 - Accounts: dynamic table; type = asset | debt | credit.
-- Convention: CURRENT (post-payoff). Checking recorded after cards are paid;
+- Convention: CURRENT. Weekly capture order: record credit-card balances
+  PRE-payoff (= that week's spend), pay the cards, then record checking
+  POST-payoff. So card balances are pre-payoff, checking is post-payoff;
   net worth = sum of asset + debt balances (debts stored negative, so they net
   out; Mortgage today); credit cards EXCLUDED from net worth and used only for
   Spending. (Possible future switch noted below.)
@@ -36,8 +38,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 - Net worth = sum of asset + debt balances (debts negative); credit excluded
   (checking already reflects weekly payoff; subtracting cards would double-count
   spend).
-- Weekly spend = absolute value of summed credit-type balances that week (credit
-  stored negative; no separate table).
+- Weekly spend = absolute value of summed credit-type balances that week,
+  captured PRE-payoff so they equal that week's spend (credit stored negative;
+  no separate table).
 - Derived, not stored: assets/debt/worth series, growth rates, spend averages,
   savings split.
 
