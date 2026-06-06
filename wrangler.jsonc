@@ -5,6 +5,13 @@
     "compatibility_flags": ["nodejs_compat"],
     "keep_vars": true,
     "main": "./src/worker.ts",
+    "workers_dev": false,
+    "routes": [
+        {
+            "pattern": "finance.bradgarropy.com",
+            "custom_domain": true,
+        },
+    ],
     "dev": {
         "port": 3000,
     },
