@@ -12,11 +12,6 @@
             "custom_domain": true,
         },
     ],
-    "vars": {
-        "ACCESS_TEAM_DOMAIN": "https://bradgarropy.cloudflareaccess.com",
-        "ACCESS_AUD": "",
-        "ACCESS_ALLOWED_EMAIL": "bradgarropy@gmail.com",
-    },
     "dev": {
         "port": 3000,
     },
