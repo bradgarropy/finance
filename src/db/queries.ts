@@ -1,7 +1,7 @@
-import {asc, desc, eq} from "drizzle-orm"
+import {asc, desc, eq, sql} from "drizzle-orm"
 
-import type {Database} from "./client"
-import {accounts, balances, settings} from "./schema"
+import type {Database} from "~/db/client"
+import {accounts, balances, settings} from "~/db/schema"
 
 export const settingsId = 1
 
@@ -9,15 +9,18 @@ export type Account = typeof accounts.$inferSelect
 export type Balance = typeof balances.$inferSelect
 export type AppSettings = typeof settings.$inferSelect
 
-export const getAccounts = (database: Database) => {
-    return database
+export type BalanceEntry = Pick<Balance, "accountId" | "amountCents">
+export type SettingsInput = Omit<AppSettings, "id">
+
+export const getAccounts = (db: Database) => {
+    return db
         .select()
         .from(accounts)
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
 }
 
-export const getBalancesByDate = (database: Database, date: string) => {
-    return database
+export const getBalancesByDate = (db: Database, date: string) => {
+    return db
         .select({
             id: balances.id,
             accountId: balances.accountId,
@@ -34,8 +37,8 @@ export const getBalancesByDate = (database: Database, date: string) => {
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
 }
 
-export const getLatestBalances = async (database: Database) => {
-    const rows = await database
+export const getLatestBalances = async (db: Database) => {
+    const rows = await db
         .select({date: balances.date})
         .from(balances)
         .orderBy(desc(balances.date))
@@ -47,11 +50,11 @@ export const getLatestBalances = async (database: Database) => {
         return []
     }
 
-    return getBalancesByDate(database, latestDate)
+    return getBalancesByDate(db, latestDate)
 }
 
-export const getAllBalances = (database: Database) => {
-    return database
+export const getAllBalances = (db: Database) => {
+    return db
         .select({
             id: balances.id,
             accountId: balances.accountId,
@@ -64,15 +67,55 @@ export const getAllBalances = (database: Database) => {
         })
         .from(balances)
         .innerJoin(accounts, eq(balances.accountId, accounts.id))
-        .orderBy(asc(balances.date), asc(accounts.sortOrder), asc(accounts.name))
+        .orderBy(
+            asc(balances.date),
+            asc(accounts.sortOrder),
+            asc(accounts.name),
+        )
 }
 
-export const getSettings = async (database: Database) => {
-    const rows = await database
+export const getSettings = async (db: Database) => {
+    const rows = await db
         .select()
         .from(settings)
         .where(eq(settings.id, settingsId))
         .limit(1)
 
     return rows[0] ?? null
+}
+
+export const upsertBalances = async (
+    db: Database,
+    date: string,
+    entries: BalanceEntry[],
+) => {
+    if (entries.length === 0) {
+        return
+    }
+
+    const values = entries.map(entry => ({
+        accountId: entry.accountId,
+        amountCents: entry.amountCents,
+        date,
+    }))
+
+    await db
+        .insert(balances)
+        .values(values)
+        .onConflictDoUpdate({
+            target: [balances.accountId, balances.date],
+            set: {amountCents: sql`excluded.amount_cents`},
+        })
+}
+
+export const setSettings = (db: Database, input: SettingsInput) => {
+    const value = {
+        ...input,
+        id: settingsId,
+    }
+
+    return db.insert(settings).values(value).onConflictDoUpdate({
+        target: settings.id,
+        set: input,
+    })
 }
