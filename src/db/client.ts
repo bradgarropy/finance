@@ -5,3 +5,5 @@ import * as schema from "./schema"
 export const db = (env: Env) => {
     return drizzle(env.DB, {schema})
 }
+
+export type Database = ReturnType<typeof db>
