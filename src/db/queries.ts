@@ -1,4 +1,4 @@
-import {asc, eq} from "drizzle-orm"
+import {asc, desc, eq} from "drizzle-orm"
 
 import type {Database} from "./client"
 import {accounts, balances, settings} from "./schema"
@@ -32,6 +32,39 @@ export const getBalancesByDate = (database: Database, date: string) => {
         .innerJoin(accounts, eq(balances.accountId, accounts.id))
         .where(eq(balances.date, date))
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
+}
+
+export const getLatestBalances = async (database: Database) => {
+    const rows = await database
+        .select({date: balances.date})
+        .from(balances)
+        .orderBy(desc(balances.date))
+        .limit(1)
+
+    const latestDate = rows[0]?.date
+
+    if (!latestDate) {
+        return []
+    }
+
+    return getBalancesByDate(database, latestDate)
+}
+
+export const getAllBalances = (database: Database) => {
+    return database
+        .select({
+            id: balances.id,
+            accountId: balances.accountId,
+            accountName: accounts.name,
+            accountType: accounts.type,
+            accountCategory: accounts.category,
+            accountSortOrder: accounts.sortOrder,
+            date: balances.date,
+            amountCents: balances.amountCents,
+        })
+        .from(balances)
+        .innerJoin(accounts, eq(balances.accountId, accounts.id))
+        .orderBy(asc(balances.date), asc(accounts.sortOrder), asc(accounts.name))
 }
 
 export const getSettings = async (database: Database) => {
