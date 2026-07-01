@@ -1,0 +1,231 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "76d99332-d6f4-4b42-a209-db0cbbd8beb7",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "accounts": {
+      "name": "accounts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "archived": {
+          "name": "archived",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "accounts_name_unique": {
+          "name": "accounts_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "accounts_type_check": {
+          "name": "accounts_type_check",
+          "value": "\"accounts\".\"type\" in ('asset', 'liability')"
+        },
+        "accounts_category_check": {
+          "name": "accounts_category_check",
+          "value": "\"accounts\".\"category\" in ('cash', 'savings', 'investment', 'retirement', 'mortgage', 'credit')"
+        }
+      }
+    },
+    "balances": {
+      "name": "balances",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "balances_date_idx": {
+          "name": "balances_date_idx",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        },
+        "balances_account_id_date_unique": {
+          "name": "balances_account_id_date_unique",
+          "columns": [
+            "account_id",
+            "date"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "balances_account_id_accounts_id_fk": {
+          "name": "balances_account_id_accounts_id_fk",
+          "tableFrom": "balances",
+          "tableTo": "accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "balances_amount_cents_check": {
+          "name": "balances_amount_cents_check",
+          "value": "\"balances\".\"amount_cents\" >= 0"
+        }
+      }
+    },
+    "settings": {
+      "name": "settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "checking_baseline_cents": {
+          "name": "checking_baseline_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "excess_invest_pct": {
+          "name": "excess_invest_pct",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "excess_save_pct": {
+          "name": "excess_save_pct",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "default_window": {
+          "name": "default_window",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "settings_id_check": {
+          "name": "settings_id_check",
+          "value": "\"settings\".\"id\" = 1"
+        },
+        "settings_checking_baseline_cents_check": {
+          "name": "settings_checking_baseline_cents_check",
+          "value": "\"settings\".\"checking_baseline_cents\" >= 0"
+        },
+        "settings_excess_invest_pct_check": {
+          "name": "settings_excess_invest_pct_check",
+          "value": "\"settings\".\"excess_invest_pct\" between 0 and 100"
+        },
+        "settings_excess_save_pct_check": {
+          "name": "settings_excess_save_pct_check",
+          "value": "\"settings\".\"excess_save_pct\" between 0 and 100"
+        },
+        "settings_excess_split_check": {
+          "name": "settings_excess_split_check",
+          "value": "\"settings\".\"excess_invest_pct\" + \"settings\".\"excess_save_pct\" = 100"
+        },
+        "settings_default_window_check": {
+          "name": "settings_default_window_check",
+          "value": "\"settings\".\"default_window\" in (4, 12, 26, 52)"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
