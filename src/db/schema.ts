@@ -27,10 +27,15 @@ export const accounts = sqliteTable(
         type: text("type", {enum: accountTypes}).notNull(),
         category: text("category", {enum: accountCategories}).notNull(),
         sortOrder: integer("sort_order").notNull(),
-        archived: integer("archived", {mode: "boolean"}).notNull().default(false),
+        archived: integer("archived", {mode: "boolean"})
+            .notNull()
+            .default(false),
     },
     table => [
-        check("accounts_type_check", sql`${table.type} in ('asset', 'liability')`),
+        check(
+            "accounts_type_check",
+            sql`${table.type} in ('asset', 'liability')`,
+        ),
         check(
             "accounts_category_check",
             sql`${table.category} in ('cash', 'savings', 'investment', 'retirement', 'mortgage', 'credit')`,
@@ -50,7 +55,10 @@ export const balances = sqliteTable(
     },
     table => [
         index("balances_date_idx").on(table.date),
-        uniqueIndex("balances_account_id_date_unique").on(table.accountId, table.date),
+        uniqueIndex("balances_account_id_date_unique").on(
+            table.accountId,
+            table.date,
+        ),
         check("balances_amount_cents_check", sql`${table.amountCents} >= 0`),
     ],
 )
