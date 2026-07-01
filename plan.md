@@ -12,37 +12,52 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 
 - Storage: Cloudflare D1 (binding `DB`, db `finance`) via Drizzle ORM.
 - Migrations: Drizzle Kit generates SQL; Wrangler applies it.
-- Auth: Cloudflare Access (Zero Trust), only bradgarropy@gmail.com. The email
-  header is NOT trusted on its own: workers.dev exposure is disabled, Access
-  covers every hostname/route, AND the Access JWT (Cf-Access-Jwt-Assertion) is
-  cryptographically validated server-side before any identity is trusted.
-  Implemented + verified FIRST.
-- Accounts: dynamic table; type = asset | debt | credit.
-- Convention: CURRENT. Weekly capture order: record credit-card balances
-  PRE-payoff (= that week's spend), pay the cards, then record checking
-  POST-payoff. So card balances are pre-payoff, checking is post-payoff;
-  net worth = sum of asset + debt balances (debts stored negative, so they net
-  out; Mortgage today); credit cards EXCLUDED from net worth and used only for
-  Spending. (Possible future switch noted below.)
+- Auth: Cloudflare Access (Zero Trust), only bradgarropy@gmail.com, enforced at
+  the edge. workers.dev exposure is disabled and the custom domain is the only
+  route, so the only path to the Worker is through Access. Decided to rely on
+  the Access policy alone - NO in-Worker JWT validation (we tried to spoof it
+  and could not; see Phase 1). Security therefore depends on config discipline
+  (see the guardrail note in Phase 1). Implemented + verified FIRST. [DONE]
+- Accounts: dynamic table. `type = asset | liability`; `category` (CHECK):
+  cash, savings, investment, retirement, mortgage, credit. Store BOTH type and
+  category. `category = credit` is load-bearing for Spending only.
+- Storage: all balances stored as POSITIVE magnitudes; sign is derived from
+  `type`. Money as integer cents.
+- Convention: PRE-PAYOFF / standard. The weekly form captures one point-in-time
+  snapshot BEFORE any money is moved (checking still holds the amount that will
+  pay the cards); the app then recommends card payments + savings transfers.
+  Net worth = SUM(assets) - SUM(liabilities) with credit INCLUDED as a liability
+  (no exclusion rule). Requires: import backfills historical checking to
+  pre-payoff (+ card totals), and the Savings calc uses available (post-payoff)
+  checking = checking - outstanding credit.
 - History + Constants imported from CSV exports kept OUTSIDE the public repo.
 - Charts: Recharts (client-rendered).
 - Remove the Sentry demo routes.
 
 ## Data model
 
-- Accounts (Balances tab): Checking, Savings, Emergency, 401k, HSA, Investments
-  (assets); Mortgage (debt); NFCU, Apple (credit).
-- Sign convention: assets positive; debts and credit balances negative (matches
-  the spreadsheet). Net worth = SUM of balances. Money stored as integer cents.
+- Accounts (Balances tab), each with `type` + `category`:
+    - Checking -> asset / cash
+    - Savings -> asset / savings
+    - Emergency -> asset / savings
+    - Investments -> asset / investment
+    - HSA -> asset / investment
+    - 401k -> asset / retirement
+    - Mortgage -> liability / mortgage
+    - NFCU, Apple -> liability / credit
+- Sign convention: store ALL amounts as positive magnitudes; derive sign from
+  `type` in the logic. Money stored as integer cents.
 - Weekly entries keyed by date; history back to ~2008.
-- Net worth = sum of asset + debt balances (debts negative); credit excluded
-  (checking already reflects weekly payoff; subtracting cards would double-count
-  spend).
-- Weekly spend = absolute value of summed credit-type balances that week,
-  captured PRE-payoff so they equal that week's spend (credit stored negative;
-  no separate table).
-- Derived, not stored: assets/debt/worth series, growth rates, spend averages,
-  savings split.
+- Net worth = SUM(assets) - SUM(liabilities). Credit is INCLUDED (at the
+  pre-payoff snapshot you genuinely owe the card balance). No exclusion rule.
+- Weekly spend = SUM of `category = credit` balances that week, captured
+  pre-payoff so they equal that week's spend (no separate table).
+- Savings (available/post-payoff): `available = checking - SUM(credit)`;
+  `excess = max(available - baseline, 0)`; invest = invest_pct x excess,
+  save = save_pct x excess. (Backs the cards out of checking since checking is
+  stored pre-payoff.)
+- Derived, not stored: assets/liabilities/net-worth series, growth rates, spend
+  averages, savings split.
 
 ## Configurable windows (Overview growth + Spending averages)
 
@@ -52,28 +67,39 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 
 ---
 
-## Phase 1 - Cloudflare Access (lock down FIRST)
+## Phase 1 - Cloudflare Access (lock down FIRST) - DONE
 
-- Bind finance.bradgarropy.com as a Workers custom domain. Disable the
-  workers.dev route (`workers_dev: false`) and confirm no other hostname/route
-  reaches the Worker without Access in front - removes the unauthenticated
-  bypass path.
+Shipped as Access-only (no in-Worker auth). PR #3 (`🔐 lockdown`) merged + deployed.
+
+What was done:
+
+- `wrangler.jsonc`: bound finance.bradgarropy.com as a Workers custom domain and
+  disabled the workers.dev route (`workers_dev: false`). The custom domain is the
+  only route, so every request must pass through Access.
 - Zero Trust > Access > Applications: self-hosted app for the domain; Allow
-  policy email == bradgarropy@gmail.com; default block. Record the Application
-  Audience (AUD) tag and team domain.
-- `src/utils/auth.ts`: validate the Access JWT in `Cf-Access-Jwt-Assertion`
-  before trusting any identity:
-    - Fetch + cache team JWKS from
-      https://<team>.cloudflareaccess.com/cdn-cgi/access/certs.
-    - Verify signature, `iss` (team domain), `aud` (app AUD tag), and expiry.
-    - Require verified token email == bradgarropy@gmail.com; 403 otherwise.
-    - Applied in the root loader so every route is protected before features
-      exist. `Cf-Access-Authenticated-User-Email` is only a convenience read
-      AFTER the JWT verifies - never trusted alone.
-    - Store team domain + AUD as Worker vars/secrets.
-- VERIFY: only Brad's email passes via the custom domain; forged email headers
-  and any non-Access request path are rejected (403); confirm workers.dev is
-  unreachable.
+  policy email == bradgarropy@gmail.com; One-Time PIN login. Verified login works.
+- No Worker-side auth code: the app renders for any request that reaches it; the
+  edge Access policy is the only gate.
+
+Decision - Access policy only, no JWT validation:
+
+- We initially built in-Worker Access JWT verification (`jose`: JWKS fetch, verify
+  signature + iss + aud + expiry, 403 otherwise) plus a root-loader guard and
+  tests, then removed it to test whether the Access policy alone suffices.
+- Spoof test against the live deployment confirmed it holds:
+    - No cookie -> 302 to the Access login.
+    - Forged `Cf-Access-Authenticated-User-Email` header -> 302 (Access ignores it).
+    - Forged `Cf-Access-Jwt-Assertion` header -> 302.
+    - Forged `CF_Authorization` cookie -> 302 (Access validates the signature).
+    - Old `*.workers.dev` URL -> 404 (`error code: 1042`, no Worker bound).
+- Could not spoof it, so we kept Access-only. The JWT verification code is
+  preserved in the `phase-1-access` branch history if we ever need it.
+
+GUARDRAIL (config discipline): this security relies on the Worker having no
+un-gated path. Before adding sensitive data, and whenever changing routing:
+keep `workers_dev: false`, do NOT add another route/custom domain without its own
+Access app, and do NOT re-enable preview/version URLs. If any un-gated path is
+introduced, restore the in-Worker JWT verification so it fails closed.
 
 ## Phase 2 - Drizzle + schema
 
@@ -81,15 +107,13 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 - `drizzle.config.ts`: sqlite dialect; schema `src/db/schema.ts`; out
   `src/db/migrations`.
 - `src/db/schema.ts` defines three tables:
-    - `accounts(id, name UNIQUE, type 'asset'|'debt'|'credit', sortOrder, archived)`
+    - `accounts(id, name UNIQUE, type CHECK('asset'|'liability'), category CHECK('cash'|'savings'|'investment'|'retirement'|'mortgage'|'credit'), sortOrder, archived)`
     - `balances(id, accountId FK, date TEXT, amountCents INT, unique(accountId, date))`, plus an index on `date`
     - `settings(key TEXT PK, value TEXT)`, seeded from the Constants tab:
       `checking_baseline_cents=2000000`, `savings_invest_pct=75`,
-      `savings_save_pct=25`, `default_window=52`,
-      `checking_convention=post_payoff`
-    - Money stored as integer cents. Sign convention: assets positive; debts and
-      credit balances negative — consistent with the Data model (net worth = SUM
-      of balances)
+      `savings_save_pct=25`, `default_window=52`
+    - Money stored as integer cents, always POSITIVE; sign is derived from
+      `account.type` in the logic (net worth = SUM(assets) - SUM(liabilities)).
 - `src/db/client.ts`: `db(env)` -> `drizzle(env.DB, { schema })`.
 - Generate + apply: `drizzle-kit generate` then
   `wrangler d1 migrations apply finance --local` / `--remote`.
@@ -103,10 +127,15 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 
 - Export Balances + Constants tabs to CSVs OUTSIDE the repo (e.g. ~/Desktop).
 - `scripts/import.ts` takes CSV path args; reads at runtime only.
-    - Clean `$`, thousands commas, `(parens)`=negative.
+    - Clean `$`, thousands commas, `(parens)`; store all amounts as positive
+      magnitudes.
     - Detect orientation (dates rows vs cols) - finalize against real headers.
-    - Seed accounts (assign asset/debt/credit), bulk-insert balances, seed
-      settings from Constants. Idempotent upserts.
+    - Seed accounts (assign type + category per the Data model), bulk-insert
+      balances, seed settings from Constants. Idempotent upserts.
+    - Pre-payoff backfill: for each historical week, add that week's total card
+      balances to checking (the spreadsheet recorded checking post-payoff; we
+      store pre-payoff). Deterministic since we have every week's card balances;
+      net worth values are unchanged.
 - Local D1 first, validate, then `--remote`.
 - Safety: add `*.csv`, `*.numbers` to `.gitignore`. Repo holds only code.
 
@@ -116,7 +145,8 @@ Built first to validate that data writes into D1 accurately before any read/
 chart views sit on top of it.
 
 - Update `src/routes.ts`; delete sentryFrontend/Loader/Action routes + entries
-    - tests. Every loader/action calls the Phase 1 auth guard.
+    - tests. (No app-side auth guard - Cloudflare Access gates every request at
+      the edge; see Phase 1.)
 - `/new`: stepped form (one account per step), prefilled with prior week's
   value, date defaults to upcoming weekend; action upserts all balances via
   `upsertBalances`.
@@ -125,22 +155,24 @@ chart views sit on top of it.
 
 ## Phase 6 - Finance math
 
-- `src/utils/finance.ts` pure helpers (unit tested): net-worth series; growth
-  over window N and since-anchor; weekly spend series; overall + rolling +
-  since-anchor spend averages; savings split. Net-worth + savings respect the
-  `checking_convention` setting.
+- `src/utils/finance.ts` pure helpers (unit tested): net-worth series
+  (SUM(assets) - SUM(liabilities)); growth over window N and since-anchor;
+  weekly spend series (SUM of credit); overall + rolling + since-anchor spend
+  averages; savings split (available = checking - SUM(credit); excess over
+  baseline; invest_pct / save_pct). All amounts positive; sign from `type`.
 
 ## Phase 7 - Read views (Overview, Spending, Savings, Settings)
 
-Every loader calls the Phase 1 auth guard.
+(Cloudflare Access gates every request at the edge; no app-side auth guard.)
 
-- `/` Overview: assets/debt/net-worth table + chart; growth-rate window selector
-  (presets + all-time + since-week).
-- `/spending`: weekly total (NFCU+Apple), overall avg, rolling avg with same
-  window selector; spending trend chart.
-- `/savings` (calculator only): excess = latest checking - baseline; recommend
-  savings_invest_pct -> investments, savings_save_pct -> savings on positive
-  excess. Nothing stored.
+- `/` Overview: assets/liabilities/net-worth table + chart (Assets = type=asset,
+  Debt = type=liability); growth-rate window selector (presets + all-time +
+  since-week).
+- `/spending`: weekly total (category=credit: NFCU+Apple), overall avg, rolling
+  avg with same window selector; spending trend chart.
+- `/savings` (calculator only): available = latest checking - SUM(credit);
+  excess = max(available - baseline, 0); recommend savings_invest_pct ->
+  investments, savings_save_pct -> savings. Nothing stored.
 - `/settings`: edit baseline, split %, default window.
 - Update `Navigation.tsx`: Overview, Spending, Savings, Add Entry, Settings.
 
@@ -156,16 +188,10 @@ Every loader calls the Phase 1 auth guard.
 1. Export Balances + Constants tabs to CSVs under ~/Desktop (outside repo) to
    confirm exact account names, orientation, and constant values.
 
-## Future work (possible, after data is in D1)
+## Future work
 
-- Switch checking convention to pre-payoff + subtract cards from net worth.
-  Requires, in lockstep:
-    1. One-time idempotent backfill `scripts/normalize-checking.ts`:
-       checking += weekly card totals for each historical week; guarded by the
-       `checking_convention` setting so it can't double-apply.
-    2. Net worth includes credit-card balances (already negative) in the sum.
-    3. Savings calc adjusts BOTH the excess AND the 75/25 split inputs by the
-       outstanding card amount (available_checking = checking - outstanding_cards
-        - baseline) so transfer recommendations stay accurate.
-          Net-worth totals are unchanged by the switch; only checking representation,
-          card treatment, and the savings inputs change.
+- Carry-a-balance support: the current model assumes cards are paid in full each
+  week (card balance = weekly spend). If a balance is ever carried, spend and
+  outstanding balance diverge and would need to be tracked separately.
+- Optional finer asset categories (e.g. split HSA out of `investment`) if
+  liquidity/retirement views need them - requires a CHECK-constraint migration.
