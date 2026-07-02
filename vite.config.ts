@@ -56,7 +56,11 @@ const config = defineConfig({
             reportOnFailure: false,
         },
         environment: "jsdom",
-        include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+        include: [
+            "scripts/**/*.test.ts",
+            "src/**/*.test.ts",
+            "src/**/*.test.tsx",
+        ],
         globals: false,
         passWithNoTests: true,
         setupFiles: "src/tests/setup.ts",
