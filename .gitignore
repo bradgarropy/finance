@@ -20,6 +20,8 @@ worker-configuration.d.ts
 
 # secrets
 .env
+*.csv
+*.numbers
 
 # os
 .DS_Store
