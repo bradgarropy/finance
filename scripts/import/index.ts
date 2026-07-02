@@ -9,7 +9,7 @@ import {readCsv, readHeaders} from "./utils.ts"
 type Args = {
     balances?: string
     constants?: string
-    local: boolean
+    remote: boolean
 }
 
 type BalanceSummary = {
@@ -29,19 +29,24 @@ type ConstantsSummary = {
     rows: number
 }
 
+const moneyFormatter = new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    style: "currency",
+})
+
 const repoRoot = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
     "../..",
 )
 
 const parseArgs = (argv: string[]): Args => {
-    const args: Args = {local: false}
+    const args: Args = {remote: false}
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index]
 
-        if (arg === "--local") {
-            args.local = true
+        if (arg === "--remote") {
+            args.remote = true
             continue
         }
 
@@ -119,6 +124,11 @@ const summarizeConstants = (
     }
 }
 
+const formatCents = (cents: number) => moneyFormatter.format(cents / 100)
+
+const getHeading = (args: Args) =>
+    args.remote ? "Remote import complete" : "Local import complete"
+
 const main = async () => {
     const args = parseArgs(process.argv.slice(2))
     const balancesPath = assertRequiredPath("balances", args.balances)
@@ -137,37 +147,34 @@ const main = async () => {
     const balances = summarizeBalances(balanceHeaders, balanceRows, payload)
     const constants = summarizeConstants(constantsHeaders, constantsRows)
 
-    console.log(args.local ? "Local import" : "Import dry run")
-    console.log(`Balances: ${path.basename(balancesPath)}`)
-    console.log(`  rows: ${balances.rows}`)
-    console.log(`  columns: ${balances.columns}`)
-    console.log(`  headers: ${balances.headers.join(", ")}`)
-    console.log(`  date range: ${balances.startDate} to ${balances.endDate}`)
-    console.log(`  balance rows parsed: ${balances.balanceRows}`)
-    console.log(`  blank card cells skipped: ${balances.blankCardCells}`)
-    console.log(`  explicit zero card cells: ${balances.explicitZeroCardCells}`)
-    console.log(`Constants: ${path.basename(constantsPath)}`)
-    console.log(`  rows: ${constants.rows}`)
-    console.log(`  columns: ${constants.columns}`)
-    console.log(`  headers: ${constants.headers.join(", ")}`)
-    console.log("  checking baseline: present")
-    console.log("  emergency baseline: present")
+    const {writeImport} = await import("./database.ts")
+
+    await writeImport(payload, {remote: args.remote})
+
+    console.log(getHeading(args))
     console.log(
-        `  excess split default: ${payload.settings.excessInvestPct}/${payload.settings.excessSavePct}`,
+        `  balances: ${path.basename(balancesPath)} (${balances.rows} rows)`,
+    )
+    console.log(
+        `  constants: ${path.basename(constantsPath)} (${constants.rows} rows)`,
+    )
+    console.log(
+        `  dates: ${balances.rows} (${balances.startDate} to ${balances.endDate})`,
+    )
+    console.log(`  accounts: ${payload.accounts.length}`)
+    console.log(`  balance entries: ${balances.balanceRows}`)
+    console.log(`  skipped blank card cells: ${balances.blankCardCells}`)
+    console.log(`  explicit zero card cells: ${balances.explicitZeroCardCells}`)
+    console.log(
+        `  checking baseline: ${formatCents(payload.settings.checkingBaselineCents)}`,
+    )
+    console.log(
+        `  emergency baseline: ${formatCents(payload.settings.emergencyBaselineCents)}`,
+    )
+    console.log(
+        `  excess split: ${payload.settings.excessInvestPct}/${payload.settings.excessSavePct}`,
     )
     console.log(`  default window: ${payload.settings.defaultWindow} weeks`)
-    console.log(`Accounts: ${payload.accounts.length} matched`)
-
-    if (args.local) {
-        const {writeLocalImport} = await import("./local.ts")
-        const result = await writeLocalImport(payload)
-
-        console.log("Local D1 write complete")
-        console.log(`  accounts upserted: ${result.accounts}`)
-        console.log(`  settings upserted: ${result.settings}`)
-        console.log(`  dates upserted: ${result.dates}`)
-        console.log(`  balance rows upserted: ${result.balanceRows}`)
-    }
 }
 
 await main()

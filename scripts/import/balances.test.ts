@@ -2,7 +2,7 @@ import {expect, test} from "vitest"
 
 import type {Account} from "~/db/queries"
 
-import {groupBalancesByDate} from "./write"
+import {groupBalancesByDate} from "./balances"
 
 const accounts = [
     {

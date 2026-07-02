@@ -8,21 +8,26 @@ import {
     upsertBalances,
 } from "~/db/queries"
 
+import {groupBalancesByDate} from "./balances.ts"
 import type {ImportPayload} from "./payload.ts"
-import {groupBalancesByDate} from "./write.ts"
 
-export type LocalImportResult = {
+export type ImportResult = {
     accounts: number
     balanceRows: number
     dates: number
     settings: number
 }
 
-export const writeLocalImport = async (
+type WriteImportOptions = {
+    remote: boolean
+}
+
+export const writeImport = async (
     payload: ImportPayload,
-): Promise<LocalImportResult> => {
+    options: WriteImportOptions,
+): Promise<ImportResult> => {
     const platform = await getPlatformProxy<Env>({
-        remoteBindings: false,
+        remoteBindings: options.remote,
     })
 
     try {
