@@ -53,9 +53,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
 - Weekly spend = SUM of `category = credit` balances that week, captured
   pre-payoff so they equal that week's spend (no separate table).
 - Savings (available/post-payoff): `available = checking - SUM(credit)`;
-  `excess = max(available - baseline, 0)`; invest = invest_pct x excess,
-  save = save_pct x excess. (Backs the cards out of checking since checking is
-  stored pre-payoff.)
+  `excess = max(available - baseline, 0)`;
+  `invest = excess_invest_pct x excess`; `save = excess_save_pct x excess`.
+  (Backs the cards out of checking since checking is stored pre-payoff.)
 - Derived, not stored: assets/liabilities/net-worth series, growth rates, spend
   averages, savings split.
 
@@ -101,7 +101,7 @@ keep `workers_dev: false`, do NOT add another route/custom domain without its ow
 Access app, and do NOT re-enable preview/version URLs. If any un-gated path is
 introduced, restore the in-Worker JWT verification so it fails closed.
 
-## Phase 2 - Drizzle + schema
+## Phase 2 - Drizzle + schema - DONE
 
 - Add deps: `drizzle-orm`, `drizzle-kit` (dev).
 - `drizzle.config.ts`: sqlite dialect; schema `src/db/schema.ts`; out
@@ -109,35 +109,77 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - `src/db/schema.ts` defines three tables:
     - `accounts(id, name UNIQUE, type CHECK('asset'|'liability'), category CHECK('cash'|'savings'|'investment'|'retirement'|'mortgage'|'credit'), sortOrder, archived)`
     - `balances(id, accountId FK, date TEXT, amountCents INT, unique(accountId, date))`, plus an index on `date`
-    - `settings(key TEXT PK, value TEXT)`, seeded from the Constants tab:
-      `checking_baseline_cents=2000000`, `savings_invest_pct=75`,
-      `savings_save_pct=25`, `default_window=52`
+    - `settings(id PK CHECK(id = 1), checkingBaselineCents INT CHECK(>= 0), emergencyBaselineCents INT CHECK(>= 0), excessInvestPct INT CHECK(0-100), excessSavePct INT CHECK(0-100), defaultWindow INT CHECK(4|12|26|52))`; split percentages must sum to 100.
     - Money stored as integer cents, always POSITIVE; sign is derived from
       `account.type` in the logic (net worth = SUM(assets) - SUM(liabilities)).
 - `src/db/client.ts`: `db(env)` -> `drizzle(env.DB, { schema })`.
 - Generate + apply: `drizzle-kit generate` then
   `wrangler d1 migrations apply finance --local` / `--remote`.
 
-## Phase 3 - DB query helpers (typed, Drizzle)
+## Phase 3 - DB query helpers (typed, Drizzle) - DONE
 
-- `src/db/queries.ts`: listAccounts, getLatest, getHistory, getBalancesByDate,
-  upsertBalances(date, entries) (onConflictDoUpdate), getSettings, setSetting.
+- `src/db/queries.ts`: getAccounts, getLatestBalances, getAllBalances,
+  getBalancesByDate, upsertBalances(date, entries) (onConflictDoUpdate),
+  getSettings, setSettings.
 
-## Phase 4 - Historical import (no data committed to repo)
+## Phase 4 - Historical import (no data committed to repo) - DONE LOCAL
 
-- Export Balances + Constants tabs to CSVs OUTSIDE the repo (e.g. ~/Desktop).
-- `scripts/import.ts` takes CSV path args; reads at runtime only.
-    - Clean `$`, thousands commas, `(parens)`; store all amounts as positive
-      magnitudes.
-    - Detect orientation (dates rows vs cols) - finalize against real headers.
-    - Seed accounts (assign type + category per the Data model), bulk-insert
-      balances, seed settings from Constants. Idempotent upserts.
-    - Pre-payoff backfill: for each historical week, add that week's total card
-      balances to checking (the spreadsheet recorded checking post-payoff; we
-      store pre-payoff). Deterministic since we have every week's card balances;
-      net worth values are unchanged.
-- Local D1 first, validate, then `--remote`.
-- Safety: add `*.csv`, `*.numbers` to `.gitignore`. Repo holds only code.
+- CSV exports live outside the repo:
+    - `~/Desktop/finances/Balances-Raw.csv`
+    - `~/Desktop/finances/Constants-Baselines.csv`
+- Safety: `*.csv` and `*.numbers` are ignored. Repo holds only code.
+- `scripts/import/index.ts` takes CSV path args and reads files at runtime only.
+- Import modules:
+    - `scripts/import/index.ts`: CLI argument parsing and output summary.
+    - `scripts/import/payload.ts`: CSV-to-typed-payload parsing and transforms.
+    - `scripts/import/database.ts`: D1 write orchestration through Drizzle
+      helpers.
+    - `scripts/import/balances.ts`: account-name-to-ID mapping and grouping
+      balances by date for `upsertBalances`.
+    - `scripts/import/utils.ts`: CSV, money, date, and header helpers.
+- Local D1 import is the default write target:
+
+    ```sh
+    npx tsx scripts/import/index.ts --balances ~/Desktop/finances/Balances-Raw.csv --constants ~/Desktop/finances/Constants-Baselines.csv
+    ```
+
+- Remote D1 import requires an explicit flag:
+
+    ```sh
+    npx tsx scripts/import/index.ts --balances ~/Desktop/finances/Balances-Raw.csv --constants ~/Desktop/finances/Constants-Baselines.csv --remote
+    ```
+
+- Import behavior:
+    - Exact Balances headers are required: Date, NFCU, Apple, Checking,
+      Emergency, Savings, 401k, HSA, Investment, Mortgage.
+    - Constants headers are required: Account, Baseline.
+    - Money parser cleans `$`, thousands commas, whitespace, and `(parens)`;
+      stores all amounts as positive integer cents.
+    - Dates are normalized to `YYYY-MM-DD`.
+    - Seeds 9 accounts with type/category from the Data model.
+    - Seeds settings from Constants:
+        - Checking baseline: Constants `Checking`.
+        - Emergency baseline: Constants `Savings` row.
+        - Defaults not present in Constants: `excessInvestPct = 75`,
+          `excessSavePct = 25`, `defaultWindow = 52`.
+    - Pre-payoff backfill: each historical checking balance is transformed as
+      `checking + NFCU + Apple` because the spreadsheet recorded checking after
+      card payoff, while the app stores the pre-payoff snapshot. Blank card
+      cells count as zero for this transform.
+    - Blank NFCU/Apple cells are skipped as balance rows. Explicit `$0.00`
+      credit card cells are imported as zero rows.
+- Idempotency:
+    - Accounts upsert on unique `accounts.name`.
+    - Settings upsert on singleton `settings.id = 1`.
+    - Balances upsert on unique `(account_id, date)`.
+    - Rerunning the local import updates existing rows instead of duplicating
+      them.
+- Local verification:
+    - Local import wrote 9 accounts, 1 settings row, 764 balance rows across
+      90 dates.
+    - Verified with Wrangler local D1 counts and Cloudflare Local Explorer.
+- Remote D1 import is NOT done. Remote import requires `--remote`; apply remote
+  migrations/import only as a deliberate deployment action.
 
 ## Phase 5 - Weekly input flow (FIRST feature after import)
 
@@ -171,8 +213,8 @@ chart views sit on top of it.
 - `/spending`: weekly total (category=credit: NFCU+Apple), overall avg, rolling
   avg with same window selector; spending trend chart.
 - `/savings` (calculator only): available = latest checking - SUM(credit);
-  excess = max(available - baseline, 0); recommend savings_invest_pct ->
-  investments, savings_save_pct -> savings. Nothing stored.
+  excess = max(available - baseline, 0); recommend excess_invest_pct ->
+  investments, excess_save_pct -> savings. Nothing stored.
 - `/settings`: edit baseline, split %, default window.
 - Update `Navigation.tsx`: Overview, Spending, Savings, Add Entry, Settings.
 
@@ -185,8 +227,10 @@ chart views sit on top of it.
 
 ## Prerequisites from Brad
 
-1. Export Balances + Constants tabs to CSVs under ~/Desktop (outside repo) to
-   confirm exact account names, orientation, and constant values.
+- DONE for Phase 4 local: exported Balances + Constants tabs to CSV under
+  `~/Desktop/finances` outside the repo.
+- Before remote import: confirm remote migrations are applied and intentionally
+  rerun the importer with `--remote`.
 
 ## Future work
 
