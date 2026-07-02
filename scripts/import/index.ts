@@ -2,91 +2,14 @@ import {existsSync} from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
 
-import type {AccountInput} from "~/db/queries"
-
-import {
-    assertHeaders,
-    normalizeDate,
-    parseMoney,
-    readCsv,
-    readHeaders,
-} from "./utils.ts"
+import type {ImportPayload} from "./payload.ts"
+import {buildImportPayload} from "./payload.ts"
+import {readCsv, readHeaders} from "./utils.ts"
 
 type Args = {
     balances?: string
     constants?: string
 }
-
-const accountInputs = [
-    {
-        archived: false,
-        category: "credit",
-        name: "NFCU",
-        sortOrder: 10,
-        type: "liability",
-    },
-    {
-        archived: false,
-        category: "credit",
-        name: "Apple",
-        sortOrder: 20,
-        type: "liability",
-    },
-    {
-        archived: false,
-        category: "cash",
-        name: "Checking",
-        sortOrder: 30,
-        type: "asset",
-    },
-    {
-        archived: false,
-        category: "savings",
-        name: "Emergency",
-        sortOrder: 40,
-        type: "asset",
-    },
-    {
-        archived: false,
-        category: "savings",
-        name: "Savings",
-        sortOrder: 50,
-        type: "asset",
-    },
-    {
-        archived: false,
-        category: "retirement",
-        name: "401k",
-        sortOrder: 60,
-        type: "asset",
-    },
-    {
-        archived: false,
-        category: "investment",
-        name: "HSA",
-        sortOrder: 70,
-        type: "asset",
-    },
-    {
-        archived: false,
-        category: "investment",
-        name: "Investment",
-        sortOrder: 80,
-        type: "asset",
-    },
-    {
-        archived: false,
-        category: "mortgage",
-        name: "Mortgage",
-        sortOrder: 90,
-        type: "liability",
-    },
-] satisfies AccountInput[]
-
-const expectedBalanceHeaders = [
-    "Date",
-    ...accountInputs.map(account => account.name),
-]
 
 type BalanceSummary = {
     balanceRows: number
@@ -100,9 +23,7 @@ type BalanceSummary = {
 }
 
 type ConstantsSummary = {
-    checkingBaselineCents: number
     columns: number
-    emergencyBaselineCents: number
     headers: string[]
     rows: number
 }
@@ -155,71 +76,38 @@ const assertRequiredPath = (label: string, value?: string) => {
     return resolved
 }
 
-const summarizeBalances = (filePath: string): BalanceSummary => {
-    const headers = readHeaders(filePath)
-    const rows = readCsv(filePath)
-
-    assertHeaders(headers, expectedBalanceHeaders)
-
-    let balanceRows = 0
-    let blankCardCells = 0
-    let explicitZeroCardCells = 0
-    const dates: string[] = []
-
-    for (const row of rows) {
-        dates.push(normalizeDate(row.Date ?? ""))
-
-        for (const account of accountInputs) {
-            const rawValue = row[account.name] ?? ""
-            const amountCents = parseMoney(rawValue)
-
-            if (account.category === "credit" && amountCents === null) {
-                blankCardCells += 1
-                continue
-            }
-
-            if (account.category === "credit" && amountCents === 0) {
-                explicitZeroCardCells += 1
-            }
-
-            if (amountCents !== null) {
-                balanceRows += 1
-            }
-        }
-    }
+const summarizeBalances = (
+    headers: string[],
+    rows: ReturnType<typeof readCsv>,
+    payload: ImportPayload,
+): BalanceSummary => {
+    const creditBalances = payload.balances.filter(
+        balance =>
+            balance.accountName === "NFCU" || balance.accountName === "Apple",
+    )
+    const explicitZeroCardCells = creditBalances.filter(
+        balance => balance.amountCents === 0,
+    ).length
+    const blankCardCells = rows.length * 2 - creditBalances.length
 
     return {
-        balanceRows,
+        balanceRows: payload.balances.length,
         blankCardCells,
         columns: headers.length,
-        endDate: dates.at(-1) ?? "",
+        endDate: payload.balances.at(-1)?.date ?? "",
         explicitZeroCardCells,
         headers,
         rows: rows.length,
-        startDate: dates[0] ?? "",
+        startDate: payload.balances[0]?.date ?? "",
     }
 }
 
-const summarizeConstants = (filePath: string): ConstantsSummary => {
-    const headers = readHeaders(filePath)
-    const rows = readCsv(filePath)
-    const checking = rows.find(row => row.Account === "Checking")
-    const savings = rows.find(row => row.Account === "Savings")
-    const checkingBaselineCents = parseMoney(checking?.Baseline ?? "")
-    const emergencyBaselineCents = parseMoney(savings?.Baseline ?? "")
-
-    if (checkingBaselineCents === null) {
-        throw new Error("Missing Checking baseline.")
-    }
-
-    if (emergencyBaselineCents === null) {
-        throw new Error("Missing Emergency baseline from Savings row.")
-    }
-
+const summarizeConstants = (
+    headers: string[],
+    rows: ReturnType<typeof readCsv>,
+): ConstantsSummary => {
     return {
-        checkingBaselineCents,
         columns: headers.length,
-        emergencyBaselineCents,
         headers,
         rows: rows.length,
     }
@@ -230,8 +118,18 @@ const main = () => {
     const balancesPath = assertRequiredPath("balances", args.balances)
     const constantsPath = assertRequiredPath("constants", args.constants)
 
-    const balances = summarizeBalances(balancesPath)
-    const constants = summarizeConstants(constantsPath)
+    const balanceHeaders = readHeaders(balancesPath)
+    const balanceRows = readCsv(balancesPath)
+    const constantsHeaders = readHeaders(constantsPath)
+    const constantsRows = readCsv(constantsPath)
+    const payload = buildImportPayload(
+        balanceRows,
+        balanceHeaders,
+        constantsRows,
+        constantsHeaders,
+    )
+    const balances = summarizeBalances(balanceHeaders, balanceRows, payload)
+    const constants = summarizeConstants(constantsHeaders, constantsRows)
 
     console.log("Import dry run")
     console.log(`Balances: ${path.basename(balancesPath)}`)
@@ -248,7 +146,11 @@ const main = () => {
     console.log(`  headers: ${constants.headers.join(", ")}`)
     console.log("  checking baseline: present")
     console.log("  emergency baseline: present")
-    console.log(`Accounts: ${accountInputs.length} matched`)
+    console.log(
+        `  excess split default: ${payload.settings.excessInvestPct}/${payload.settings.excessSavePct}`,
+    )
+    console.log(`  default window: ${payload.settings.defaultWindow} weeks`)
+    console.log(`Accounts: ${payload.accounts.length} matched`)
 }
 
 main()
