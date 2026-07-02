@@ -9,6 +9,7 @@ import {readCsv, readHeaders} from "./utils.ts"
 type Args = {
     balances?: string
     constants?: string
+    local: boolean
 }
 
 type BalanceSummary = {
@@ -34,10 +35,15 @@ const repoRoot = path.resolve(
 )
 
 const parseArgs = (argv: string[]): Args => {
-    const args: Args = {}
+    const args: Args = {local: false}
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index]
+
+        if (arg === "--local") {
+            args.local = true
+            continue
+        }
 
         if (arg === "--balances") {
             args.balances = argv[index + 1]
@@ -113,7 +119,7 @@ const summarizeConstants = (
     }
 }
 
-const main = () => {
+const main = async () => {
     const args = parseArgs(process.argv.slice(2))
     const balancesPath = assertRequiredPath("balances", args.balances)
     const constantsPath = assertRequiredPath("constants", args.constants)
@@ -131,7 +137,7 @@ const main = () => {
     const balances = summarizeBalances(balanceHeaders, balanceRows, payload)
     const constants = summarizeConstants(constantsHeaders, constantsRows)
 
-    console.log("Import dry run")
+    console.log(args.local ? "Local import" : "Import dry run")
     console.log(`Balances: ${path.basename(balancesPath)}`)
     console.log(`  rows: ${balances.rows}`)
     console.log(`  columns: ${balances.columns}`)
@@ -151,6 +157,17 @@ const main = () => {
     )
     console.log(`  default window: ${payload.settings.defaultWindow} weeks`)
     console.log(`Accounts: ${payload.accounts.length} matched`)
+
+    if (args.local) {
+        const {writeLocalImport} = await import("./local.ts")
+        const result = await writeLocalImport(payload)
+
+        console.log("Local D1 write complete")
+        console.log(`  accounts upserted: ${result.accounts}`)
+        console.log(`  settings upserted: ${result.settings}`)
+        console.log(`  dates upserted: ${result.dates}`)
+        console.log(`  balance rows upserted: ${result.balanceRows}`)
+    }
 }
 
-main()
+await main()
