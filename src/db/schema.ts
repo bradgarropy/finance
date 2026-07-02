@@ -70,6 +70,7 @@ export const settings = sqliteTable(
     {
         id: integer("id").primaryKey(),
         checkingBaselineCents: integer("checking_baseline_cents").notNull(),
+        emergencyBaselineCents: integer("emergency_baseline_cents").notNull(),
         excessInvestPct: integer("excess_invest_pct").notNull(),
         excessSavePct: integer("excess_save_pct").notNull(),
         defaultWindow: integer("default_window").notNull(),
@@ -79,6 +80,10 @@ export const settings = sqliteTable(
         check(
             "settings_checking_baseline_cents_check",
             sql`${table.checkingBaselineCents} >= 0`,
+        ),
+        check(
+            "settings_emergency_baseline_cents_check",
+            sql`${table.emergencyBaselineCents} >= 0`,
         ),
         check(
             "settings_excess_invest_pct_check",
