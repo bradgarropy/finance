@@ -5,12 +5,21 @@ import {accounts, balances, settings} from "~/db/schema"
 
 export const settingsId = 1
 
-export type Account = typeof accounts.$inferSelect
-export type Balance = typeof balances.$inferSelect
-export type AppSettings = typeof settings.$inferSelect
+type AccountSelect = typeof accounts.$inferSelect
+type BalanceSelect = typeof balances.$inferSelect
+type SettingsSelect = typeof settings.$inferSelect
 
-export type BalanceEntry = Pick<Balance, "accountId" | "amountCents">
-export type SettingsInput = Omit<AppSettings, "id">
+type AccountInsert = typeof accounts.$inferInsert
+type BalanceInsert = typeof balances.$inferInsert
+type SettingsInsert = typeof settings.$inferInsert
+
+export type Account = AccountSelect
+export type Balance = BalanceSelect
+export type Settings = SettingsSelect
+
+export type AccountInput = Omit<AccountInsert, "id">
+export type BalanceInput = Pick<BalanceInsert, "accountId" | "amountCents">
+export type SettingsInput = Omit<SettingsInsert, "id">
 
 export const getAccounts = (db: Database) => {
     return db
@@ -84,10 +93,29 @@ export const getSettings = async (db: Database) => {
     return rows[0] ?? null
 }
 
+export const upsertAccounts = async (db: Database, entries: AccountInput[]) => {
+    if (entries.length === 0) {
+        return
+    }
+
+    await db
+        .insert(accounts)
+        .values(entries)
+        .onConflictDoUpdate({
+            target: accounts.name,
+            set: {
+                archived: sql`excluded.archived`,
+                category: sql`excluded.category`,
+                sortOrder: sql`excluded.sort_order`,
+                type: sql`excluded.type`,
+            },
+        })
+}
+
 export const upsertBalances = async (
     db: Database,
     date: string,
-    entries: BalanceEntry[],
+    entries: BalanceInput[],
 ) => {
     if (entries.length === 0) {
         return
