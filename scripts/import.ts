@@ -14,6 +14,8 @@ import type {
 } from "~/db/queries"
 import {
     getAccounts,
+    getAllBalances,
+    getSettings,
     setSettings,
     upsertAccounts,
     upsertBalances,
@@ -37,6 +39,8 @@ type ImportPayload = {
     balances: ImportedBalance[]
     settings: SettingsInput
 }
+
+type ImportedAccountBalance = Awaited<ReturnType<typeof getAllBalances>>[number]
 
 type BalanceSummary = {
     balanceRows: number
@@ -62,6 +66,10 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
 
 const BALANCE_FILE_NAME = "Balances-Raw.csv"
 const CONSTANTS_FILE_NAME = "Constants-Baselines.csv"
+const OVERVIEW_FILE_NAME = "Overview-Overview.csv"
+const SAVING_FILE_NAME = "Saving-Savings.csv"
+const SAVING_RATIO_FILE_NAME = "Saving-Ratio.csv"
+const SPENDING_FILE_NAME = "Spending-Credit Cards.csv"
 
 const defaultSettings = {
     defaultWindow: 52,
@@ -144,6 +152,39 @@ const expectedBalanceHeaders = [
 ]
 
 const expectedConstantsHeaders = ["Account", "Baseline"]
+const expectedOverviewHeaders = [
+    "Date",
+    "Assets",
+    "Debt",
+    "Worth",
+    "Growth Rate (R1)",
+    "Growth Rate (R4)",
+    "Growth Rate (R12)",
+]
+const expectedSavingHeaders = [
+    "Date",
+    "NFCU",
+    "Apple",
+    "Spent",
+    "Checking",
+    "Investments",
+    "Savings",
+    "Saved",
+    "Rate",
+    "Average",
+    "Average (R4)",
+    "Average (R12)",
+]
+const expectedSavingRatioHeaders = ["Category", "Percent"]
+const expectedSpendingHeaders = [
+    "Date",
+    "NFCU",
+    "Apple",
+    "Total",
+    "Average",
+    "Average (R4)",
+    "Average (R12)",
+]
 
 const repoRoot = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -213,6 +254,22 @@ const getImportPaths = (dir?: string) => {
             "constants",
             path.join(resolvedDir, CONSTANTS_FILE_NAME),
         ),
+        overview: assertRequiredPath(
+            "overview",
+            path.join(resolvedDir, OVERVIEW_FILE_NAME),
+        ),
+        saving: assertRequiredPath(
+            "saving",
+            path.join(resolvedDir, SAVING_FILE_NAME),
+        ),
+        savingRatio: assertRequiredPath(
+            "saving ratio",
+            path.join(resolvedDir, SAVING_RATIO_FILE_NAME),
+        ),
+        spending: assertRequiredPath(
+            "spending",
+            path.join(resolvedDir, SPENDING_FILE_NAME),
+        ),
     }
 }
 
@@ -259,6 +316,22 @@ const parseMoney = (value: string) => {
     }
 
     return Math.round(Math.abs(isParenthesized ? -amount : amount) * 100)
+}
+
+const parseRequiredPercent = (value: string, label: string) => {
+    const trimmed = value.trim()
+
+    if (!trimmed.endsWith("%")) {
+        throw new Error(`Invalid ${label}: ${value}`)
+    }
+
+    const percent = Number(trimmed.slice(0, -1))
+
+    if (!Number.isFinite(percent)) {
+        throw new Error(`Invalid ${label}: ${value}`)
+    }
+
+    return percent
 }
 
 const normalizeDate = (value: string) => {
@@ -388,6 +461,348 @@ const parseRequiredMoney = (value: string, label: string) => {
     return amountCents
 }
 
+const parseOptionalMoneyAsZero = (value: string) => parseMoney(value) ?? 0
+
+const getBalanceDateIndex = (balances: ImportedAccountBalance[]) => {
+    const balancesByDate = new Map<string, ImportedAccountBalance[]>()
+
+    for (const balance of balances) {
+        const entries = balancesByDate.get(balance.date) ?? []
+
+        entries.push(balance)
+        balancesByDate.set(balance.date, entries)
+    }
+
+    return balancesByDate
+}
+
+const sumBalances = (
+    balances: ImportedAccountBalance[],
+    predicate: (balance: ImportedAccountBalance) => boolean,
+) => {
+    return balances
+        .filter(predicate)
+        .reduce((total, balance) => total + balance.amountCents, 0)
+}
+
+const getAccountBalance = (
+    balances: ImportedAccountBalance[],
+    accountName: string,
+) => {
+    return (
+        balances.find(balance => balance.accountName === accountName)
+            ?.amountCents ?? 0
+    )
+}
+
+const assertCentsEqual = (
+    label: string,
+    date: string,
+    actual: number,
+    expected: number,
+) => {
+    if (actual !== expected) {
+        throw new Error(
+            `${label} mismatch for ${date}: expected ${formatCents(expected)}, received ${formatCents(actual)} (delta ${formatCents(actual - expected)}).`,
+        )
+    }
+}
+
+const assertOptionalCentsEqual = (
+    label: string,
+    date: string,
+    actual: number,
+    expectedValue: string,
+) => {
+    const expected = parseMoney(expectedValue)
+
+    if (expected === null) {
+        return
+    }
+
+    assertCentsEqual(label, date, actual, expected)
+}
+
+const assertDateSetsEqual = (
+    label: string,
+    actualDates: string[],
+    expectedDates: string[],
+) => {
+    const actual = new Set(actualDates)
+    const expected = new Set(expectedDates)
+    const missing = expectedDates.filter(date => !actual.has(date))
+    const extra = actualDates.filter(date => !expected.has(date))
+
+    if (missing.length > 0 || extra.length > 0) {
+        throw new Error(
+            `${label} dates do not match. Missing: ${missing.join(", ") || "none"}. Extra: ${extra.join(", ") || "none"}.`,
+        )
+    }
+}
+
+const validateUniqueDates = (label: string, dates: string[]) => {
+    const seen = new Set<string>()
+    const duplicates = new Set<string>()
+
+    for (const date of dates) {
+        if (seen.has(date)) {
+            duplicates.add(date)
+        }
+
+        seen.add(date)
+    }
+
+    if (duplicates.size > 0) {
+        throw new Error(
+            `${label} contains duplicate dates: ${[...duplicates].join(", ")}.`,
+        )
+    }
+}
+
+const validateSavingRatio = (rows: CsvRow[], settings: SettingsInput) => {
+    const investments = rows.find(row => row.Category === "Investments")
+    const savings = rows.find(row => row.Category === "Savings")
+    const investmentsPct = parseRequiredPercent(
+        investments?.Percent ?? "",
+        "Investments saving ratio",
+    )
+    const savingsPct = parseRequiredPercent(
+        savings?.Percent ?? "",
+        "Savings saving ratio",
+    )
+
+    if (investmentsPct !== settings.excessInvestPct) {
+        throw new Error(
+            `Investments saving ratio mismatch: expected ${settings.excessInvestPct}%, received ${investmentsPct}%.`,
+        )
+    }
+
+    if (savingsPct !== settings.excessSavePct) {
+        throw new Error(
+            `Savings saving ratio mismatch: expected ${settings.excessSavePct}%, received ${savingsPct}%.`,
+        )
+    }
+
+    if (investmentsPct + savingsPct !== 100) {
+        throw new Error(
+            `Saving ratios must add to 100%, received ${investmentsPct + savingsPct}%.`,
+        )
+    }
+}
+
+const validateOverview = (
+    rows: CsvRow[],
+    balancesByDate: Map<string, ImportedAccountBalance[]>,
+) => {
+    const dates = rows.map(row => normalizeDate(row.Date ?? ""))
+
+    validateUniqueDates("Overview", dates)
+    assertDateSetsEqual("Overview", [...balancesByDate.keys()], dates)
+
+    rows.forEach((row, index) => {
+        const date = dates[index] ?? ""
+        const balances = balancesByDate.get(date) ?? []
+        const assets = sumBalances(
+            balances,
+            balance => balance.accountType === "asset",
+        )
+        const credit = sumBalances(
+            balances,
+            balance => balance.accountCategory === "credit",
+        )
+        const mortgage = sumBalances(
+            balances,
+            balance => balance.accountCategory === "mortgage",
+        )
+        const liabilities = sumBalances(
+            balances,
+            balance => balance.accountType === "liability",
+        )
+
+        assertCentsEqual(
+            "Overview assets",
+            date,
+            assets - credit,
+            parseRequiredMoney(row.Assets ?? "", "overview assets"),
+        )
+        assertCentsEqual(
+            "Overview debt",
+            date,
+            mortgage,
+            parseRequiredMoney(row.Debt ?? "", "overview debt"),
+        )
+        assertCentsEqual(
+            "Overview worth",
+            date,
+            assets - liabilities,
+            parseRequiredMoney(row.Worth ?? "", "overview worth"),
+        )
+    })
+}
+
+const validateSpending = (
+    rows: CsvRow[],
+    balancesByDate: Map<string, ImportedAccountBalance[]>,
+) => {
+    const dates = rows.map(row => normalizeDate(row.Date ?? ""))
+
+    validateUniqueDates("Spending", dates)
+    assertDateSetsEqual("Spending", [...balancesByDate.keys()], dates)
+
+    rows.forEach((row, index) => {
+        const date = dates[index] ?? ""
+        const balances = balancesByDate.get(date) ?? []
+        const nfcu = getAccountBalance(balances, "NFCU")
+        const apple = getAccountBalance(balances, "Apple")
+
+        assertCentsEqual(
+            "Spending NFCU",
+            date,
+            nfcu,
+            parseOptionalMoneyAsZero(row.NFCU ?? ""),
+        )
+        assertCentsEqual(
+            "Spending Apple",
+            date,
+            apple,
+            parseOptionalMoneyAsZero(row.Apple ?? ""),
+        )
+        assertCentsEqual(
+            "Spending total",
+            date,
+            nfcu + apple,
+            parseOptionalMoneyAsZero(row.Total ?? ""),
+        )
+    })
+}
+
+const validateSaving = (
+    rows: CsvRow[],
+    balancesByDate: Map<string, ImportedAccountBalance[]>,
+    settings: SettingsInput,
+) => {
+    const dates = rows.map(row => normalizeDate(row.Date ?? ""))
+
+    validateUniqueDates("Saving", dates)
+    assertDateSetsEqual("Saving", [...balancesByDate.keys()], dates)
+
+    rows.forEach((row, index) => {
+        const date = dates[index] ?? ""
+        const balances = balancesByDate.get(date) ?? []
+        const nfcu = getAccountBalance(balances, "NFCU")
+        const apple = getAccountBalance(balances, "Apple")
+        const checking = getAccountBalance(balances, "Checking")
+        const postPayoffChecking = checking - nfcu - apple
+        const saved = Math.max(
+            postPayoffChecking - settings.checkingBaselineCents,
+            0,
+        )
+        const investmentsSaved = Math.round(
+            (saved * settings.excessInvestPct) / 100,
+        )
+        const savingsSaved = Math.round((saved * settings.excessSavePct) / 100)
+
+        assertCentsEqual(
+            "Saving spent",
+            date,
+            nfcu + apple,
+            parseOptionalMoneyAsZero(row.Spent ?? ""),
+        )
+        assertCentsEqual(
+            "Saving checking",
+            date,
+            postPayoffChecking,
+            parseRequiredMoney(row.Checking ?? "", "saving checking"),
+        )
+        assertOptionalCentsEqual(
+            "Saving total saved",
+            date,
+            saved,
+            row.Saved ?? "",
+        )
+        assertOptionalCentsEqual(
+            "Saving investments saved",
+            date,
+            investmentsSaved,
+            row.Investments ?? "",
+        )
+        assertOptionalCentsEqual(
+            "Saving savings saved",
+            date,
+            savingsSaved,
+            row.Savings ?? "",
+        )
+    })
+}
+
+const validateImport = async (
+    database: ReturnType<typeof db>,
+    rows: {
+        overview: CsvRow[]
+        saving: CsvRow[]
+        savingRatio: CsvRow[]
+        spending: CsvRow[]
+    },
+    settings: SettingsInput,
+) => {
+    const savedSettings = await getSettings(database)
+
+    if (!savedSettings) {
+        throw new Error("Settings were not imported.")
+    }
+
+    assertCentsEqual(
+        "Settings checking baseline",
+        "settings",
+        savedSettings.checkingBaselineCents,
+        settings.checkingBaselineCents,
+    )
+    assertCentsEqual(
+        "Settings emergency baseline",
+        "settings",
+        savedSettings.emergencyBaselineCents,
+        settings.emergencyBaselineCents,
+    )
+
+    if (savedSettings.excessInvestPct !== settings.excessInvestPct) {
+        throw new Error("Settings excessInvestPct was not imported.")
+    }
+
+    if (savedSettings.excessSavePct !== settings.excessSavePct) {
+        throw new Error("Settings excessSavePct was not imported.")
+    }
+
+    if (savedSettings.defaultWindow !== settings.defaultWindow) {
+        throw new Error("Settings defaultWindow was not imported.")
+    }
+
+    validateSavingRatio(rows.savingRatio, settings)
+
+    const accounts = await getAccounts(database)
+
+    if (accounts.length !== accountInputs.length) {
+        throw new Error(
+            `Expected ${accountInputs.length} accounts, found ${accounts.length}.`,
+        )
+    }
+
+    const accountNames = accounts.map(account => account.name)
+    const expectedAccountNames = accountInputs.map(account => account.name)
+
+    if (accountNames.join(",") !== expectedAccountNames.join(",")) {
+        throw new Error(
+            `Imported accounts are out of sync. Expected ${expectedAccountNames.join(", ")}, received ${accountNames.join(", ")}.`,
+        )
+    }
+
+    const allBalances = await getAllBalances(database)
+    const balancesByDate = getBalanceDateIndex(allBalances)
+
+    validateOverview(rows.overview, balancesByDate)
+    validateSpending(rows.spending, balancesByDate)
+    validateSaving(rows.saving, balancesByDate, settings)
+}
+
 const groupBalancesByDate = (
     balances: ImportedBalance[],
     accounts: Account[],
@@ -420,6 +835,7 @@ const groupBalancesByDate = (
 const writeImport = async (
     payload: ImportPayload,
     options: Pick<Args, "remote">,
+    validationRows: Parameters<typeof validateImport>[1],
 ) => {
     const platform = await getPlatformProxy<Env>({
         remoteBindings: options.remote,
@@ -437,6 +853,8 @@ const writeImport = async (
         for (const [date, balances] of balancesByDate) {
             await upsertBalances(database, date, balances)
         }
+
+        await validateImport(database, validationRows, payload.settings)
     } finally {
         await platform.dispose()
     }
@@ -486,14 +904,33 @@ const getHeading = (args: Args) =>
 
 const main = async () => {
     const args = parseArgs(process.argv.slice(2))
-    const {balances: balancesPath, constants: constantsPath} = getImportPaths(
-        args.dir,
-    )
+    const {
+        balances: balancesPath,
+        constants: constantsPath,
+        overview: overviewPath,
+        saving: savingPath,
+        savingRatio: savingRatioPath,
+        spending: spendingPath,
+    } = getImportPaths(args.dir)
 
     const balanceHeaders = readHeaders(balancesPath)
     const balanceRows = readCsv(balancesPath)
     const constantsHeaders = readHeaders(constantsPath)
     const constantsRows = readCsv(constantsPath)
+    const overviewHeaders = readHeaders(overviewPath)
+    const overviewRows = readCsv(overviewPath)
+    const savingHeaders = readHeaders(savingPath)
+    const savingRows = readCsv(savingPath)
+    const savingRatioHeaders = readHeaders(savingRatioPath)
+    const savingRatioRows = readCsv(savingRatioPath)
+    const spendingHeaders = readHeaders(spendingPath)
+    const spendingRows = readCsv(spendingPath)
+
+    assertHeaders(overviewHeaders, expectedOverviewHeaders)
+    assertHeaders(savingHeaders, expectedSavingHeaders)
+    assertHeaders(savingRatioHeaders, expectedSavingRatioHeaders)
+    assertHeaders(spendingHeaders, expectedSpendingHeaders)
+
     const payload = buildImportPayload(
         balanceRows,
         balanceHeaders,
@@ -503,7 +940,16 @@ const main = async () => {
     const balances = summarizeBalances(balanceHeaders, balanceRows, payload)
     const constants = summarizeConstants(constantsHeaders, constantsRows)
 
-    await writeImport(payload, {remote: args.remote})
+    await writeImport(
+        payload,
+        {remote: args.remote},
+        {
+            overview: overviewRows,
+            saving: savingRows,
+            savingRatio: savingRatioRows,
+            spending: spendingRows,
+        },
+    )
 
     console.log(getHeading(args))
     console.log(
@@ -512,6 +958,10 @@ const main = async () => {
     console.log(
         `  constants: ${path.basename(constantsPath)} (${constants.rows} rows)`,
     )
+    console.log(`  overview: ${path.basename(overviewPath)} validated`)
+    console.log(`  spending: ${path.basename(spendingPath)} validated`)
+    console.log(`  saving: ${path.basename(savingPath)} validated`)
+    console.log(`  saving ratio: ${path.basename(savingRatioPath)} validated`)
     console.log(
         `  dates: ${balances.rows} (${balances.startDate} to ${balances.endDate})`,
     )

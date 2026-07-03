@@ -127,26 +127,33 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - CSV exports live outside the repo:
     - `~/Desktop/finances/Balances-Raw.csv`
     - `~/Desktop/finances/Constants-Baselines.csv`
+    - `~/Desktop/finances/Overview-Overview.csv`
+    - `~/Desktop/finances/Spending-Credit Cards.csv`
+    - `~/Desktop/finances/Saving-Savings.csv`
+    - `~/Desktop/finances/Saving-Ratio.csv`
 - Safety: `*.csv` and `*.numbers` are ignored. Repo holds only code.
-- `scripts/import/index.ts` takes CSV path args and reads files at runtime only.
-- Import modules:
-    - `scripts/import/index.ts`: CLI argument parsing and output summary.
-    - `scripts/import/payload.ts`: CSV-to-typed-payload parsing and transforms.
-    - `scripts/import/database.ts`: D1 write orchestration through Drizzle
-      helpers.
-    - `scripts/import/balances.ts`: account-name-to-ID mapping and grouping
-      balances by date for `upsertBalances`.
-    - `scripts/import/utils.ts`: CSV, money, date, and header helpers.
+- `scripts/import.ts` is a self-contained one-time importer. It takes a
+  required directory path and reads known CSV exports from that directory at
+  runtime only.
+- The importer lives in one file and does not have dedicated script tests; it is
+  verified by running it against local D1.
+- After writing, the importer reads D1 back and validates against spreadsheet
+  exports:
+    - Overview: assets, debt, and worth.
+    - Spending: NFCU, Apple, and total spend.
+    - Saving: spent, post-payoff checking, total saved, investments saved, and
+      savings saved where those fields are populated.
+    - Saving ratio: Investments/Savings split matches imported settings.
 - Local D1 import is the default write target:
 
     ```sh
-    npx tsx scripts/import/index.ts --balances ~/Desktop/finances/Balances-Raw.csv --constants ~/Desktop/finances/Constants-Baselines.csv
+    npx tsx scripts/import.ts ~/Desktop/finances
     ```
 
 - Remote D1 import requires an explicit flag:
 
     ```sh
-    npx tsx scripts/import/index.ts --balances ~/Desktop/finances/Balances-Raw.csv --constants ~/Desktop/finances/Constants-Baselines.csv --remote
+    npx tsx scripts/import.ts ~/Desktop/finances --remote
     ```
 
 - Import behavior:
