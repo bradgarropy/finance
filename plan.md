@@ -31,7 +31,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   pre-payoff (+ card totals), and the Savings calc uses available (post-payoff)
   checking = checking - outstanding credit.
 - History + Constants imported from CSV exports kept OUTSIDE the public repo.
-- Charts: Recharts (client-rendered).
+- UI stack: Base UI primitives + Tailwind styling. Use plain Tailwind for
+  simple layout and reach for Base UI as interactive primitives appear.
+- Charts: Recharts (client-rendered), with small local chart wrappers as needed.
 - Remove the Sentry demo routes.
 
 ## Data model

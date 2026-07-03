@@ -13,4 +13,5 @@ test("renders", () => {
 
     expect(screen.getByText("Home")).toBeInTheDocument()
     expect(screen.getByText("About")).toBeInTheDocument()
+    expect(screen.getByText("Capture")).toBeInTheDocument()
 })
