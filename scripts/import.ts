@@ -5,7 +5,7 @@ import {fileURLToPath} from "node:url"
 import {parse} from "csv-parse/sync"
 import {getPlatformProxy} from "wrangler"
 
-import {db} from "~/db/client"
+import {getDatabase} from "~/db/client"
 import type {
     Account,
     AccountInput,
@@ -736,7 +736,7 @@ const validateSaving = (
 }
 
 const validateImport = async (
-    database: ReturnType<typeof db>,
+    db: ReturnType<typeof getDatabase>,
     rows: {
         overview: CsvRow[]
         saving: CsvRow[]
@@ -745,7 +745,7 @@ const validateImport = async (
     },
     settings: SettingsInput,
 ) => {
-    const savedSettings = await getSettings(database)
+    const savedSettings = await getSettings(db)
 
     if (!savedSettings) {
         throw new Error("Settings were not imported.")
@@ -778,7 +778,7 @@ const validateImport = async (
 
     validateSavingRatio(rows.savingRatio, settings)
 
-    const accounts = await getAccounts(database)
+    const accounts = await getAccounts(db)
 
     if (accounts.length !== accountInputs.length) {
         throw new Error(
@@ -795,7 +795,7 @@ const validateImport = async (
         )
     }
 
-    const allBalances = await getAllBalances(database)
+    const allBalances = await getAllBalances(db)
     const balancesByDate = getBalanceDateIndex(allBalances)
 
     validateOverview(rows.overview, balancesByDate)
@@ -842,19 +842,19 @@ const writeImport = async (
     })
 
     try {
-        const database = db(platform.env)
+        const db = getDatabase(platform.env)
 
-        await upsertAccounts(database, payload.accounts)
-        await setSettings(database, payload.settings)
+        await upsertAccounts(db, payload.accounts)
+        await setSettings(db, payload.settings)
 
-        const accounts = await getAccounts(database)
+        const accounts = await getAccounts(db)
         const balancesByDate = groupBalancesByDate(payload.balances, accounts)
 
         for (const [date, balances] of balancesByDate) {
-            await upsertBalances(database, date, balances)
+            await upsertBalances(db, date, balances)
         }
 
-        await validateImport(database, validationRows, payload.settings)
+        await validateImport(db, validationRows, payload.settings)
     } finally {
         await platform.dispose()
     }
