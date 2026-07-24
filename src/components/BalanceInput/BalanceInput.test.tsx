@@ -35,6 +35,7 @@ test("renders account details and a formatted balance", () => {
             name: "What is the current balance?",
         }),
     ).toBeInTheDocument()
+    expect(screen.getByText("Current balance")).toHaveClass("text-right")
     expect(screen.getByLabelText("Current balance")).toHaveValue("$1,234.56")
 })
 

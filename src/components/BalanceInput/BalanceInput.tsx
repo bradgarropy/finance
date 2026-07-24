@@ -49,7 +49,7 @@ const BalanceInput = ({account, onValueChange, value}: BalanceInputProps) => {
                     value={value}
                     onValueChange={onValueChange}
                 >
-                    <Field.Label className="block text-sm font-medium">
+                    <Field.Label className="block text-right text-sm font-medium">
                         Current balance
                     </Field.Label>
 
