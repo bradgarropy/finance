@@ -1,6 +1,6 @@
 import {expect, test} from "vitest"
 
-import {formatDateInput, formatMoney} from "~/utils/format"
+import {formatDate, formatDateInput, formatMoney} from "~/utils/format"
 
 test("formats cents as dollars", () => {
     expect(formatMoney(0)).toEqual("$0.00")
@@ -10,6 +10,10 @@ test("formats cents as dollars", () => {
 
 test("formats negative cents as negative dollars", () => {
     expect(formatMoney(-123456)).toEqual("-$1,234.56")
+})
+
+test("formats date strings with the full month name", () => {
+    expect(formatDate("2026-07-24")).toEqual("July 24, 2026")
 })
 
 test("formats dates for date inputs in UTC", () => {

@@ -12,8 +12,19 @@ const dateInputFormatter = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
 })
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+})
+
 export const formatMoney = (amountCents: number) => {
     return moneyFormatter.format(amountCents / 100)
+}
+
+export const formatDate = (date: string) => {
+    return dateFormatter.format(new Date(`${date}T00:00:00.000Z`))
 }
 
 export const formatDateInput = (date: Date) => {
