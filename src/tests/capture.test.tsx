@@ -5,22 +5,28 @@ import {expect, test} from "vitest"
 
 import Route from "~/routes/capture"
 
+const accounts = [
+    {
+        category: "cash" as const,
+        id: 1,
+        name: "Checking",
+        previousAmountCents: 123_456,
+        type: "asset" as const,
+    },
+    {
+        category: "credit" as const,
+        id: 2,
+        name: "Apple",
+        previousAmountCents: 4_200,
+        type: "liability" as const,
+    },
+]
+
 const renderRoute = () => {
     const Stub = createRoutesStub([
         {
             Component: Route,
-            loader: () => ({
-                accounts: [
-                    {
-                        category: "cash",
-                        id: 1,
-                        name: "Checking",
-                        previousAmountCents: 123_456,
-                        type: "asset",
-                    },
-                ],
-                latestDate: "2026-06-28",
-            }),
+            loader: () => ({accounts}),
             path: "/capture",
         },
     ])
@@ -37,17 +43,17 @@ test("renders the date step", async () => {
         }),
     ).toBeInTheDocument()
     expect(document.title).toEqual("💵 finance | capture")
-    expect(screen.getByText("1 of 10")).toBeInTheDocument()
+    expect(screen.getByText("1 of 3")).toBeInTheDocument()
     expect(screen.getByRole("progressbar")).toHaveAttribute(
         "aria-valuetext",
-        "Step 1 of 10",
+        "Step 1 of 3",
     )
     expect(
         screen.getByRole("button", {name: "Begin capture"}),
     ).toBeInTheDocument()
 })
 
-test("opens the first account input", async () => {
+test("walks through accounts and preserves their balances", async () => {
     const user = userEvent.setup()
     renderRoute()
 
@@ -59,14 +65,29 @@ test("opens the first account input", async () => {
         }),
     ).toBeInTheDocument()
     expect(screen.getByText("Checking")).toBeInTheDocument()
-    expect(screen.getByText("cash · asset")).toBeInTheDocument()
-    expect(screen.getByText("2 of 10")).toBeInTheDocument()
-    const balanceInput = screen.getByLabelText("Current balance")
+    expect(screen.getByText("cash")).toBeInTheDocument()
+    expect(screen.getByText("asset")).toBeInTheDocument()
+    expect(screen.getByText("2 of 3")).toBeInTheDocument()
 
-    expect(balanceInput).toHaveValue("$1,234.56")
+    const checkingInput = screen.getByLabelText("Current balance")
 
-    await user.clear(balanceInput)
-    await user.type(balanceInput, "letters")
+    expect(checkingInput).toHaveValue("$1,234.56")
 
-    expect(balanceInput).toHaveValue("")
+    await user.clear(checkingInput)
+    await user.type(checkingInput, "1300")
+    await user.click(screen.getByRole("button", {name: "Next account"}))
+
+    expect(screen.getByText("Apple")).toBeInTheDocument()
+    expect(screen.getByText("credit")).toBeInTheDocument()
+    expect(screen.getByText("liability")).toBeInTheDocument()
+    expect(screen.getByText("3 of 3")).toBeInTheDocument()
+    expect(screen.getByLabelText("Current balance")).toHaveValue("$42.00")
+    expect(
+        screen.queryByRole("button", {name: "Next account"}),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", {name: "Back"}))
+
+    expect(screen.getByText("Checking")).toBeInTheDocument()
+    expect(screen.getByLabelText("Current balance")).toHaveValue("$1,300.00")
 })
