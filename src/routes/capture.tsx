@@ -1,9 +1,43 @@
 import {Field} from "@base-ui/react/field"
+import type {SubmitEvent} from "react"
 
+import {getDatabase} from "~/db/client"
+import {getAccounts, getLatestBalances} from "~/db/queries"
 import {formatDateInput} from "~/utils/format"
 
+import type {Route} from "./+types/capture"
+
+export const loader = async ({context}: Route.LoaderArgs) => {
+    const database = getDatabase(context.cloudflare.env)
+
+    const [accounts, latestBalances] = await Promise.all([
+        getAccounts(database),
+        getLatestBalances(database),
+    ])
+
+    const latestBalancesByAccountId = new Map(
+        latestBalances.map(balance => [balance.accountId, balance.amountCents]),
+    )
+
+    const data = {
+        accounts: accounts
+            .filter(account => !account.archived)
+            .map(account => ({
+                category: account.category,
+                id: account.id,
+                name: account.name,
+                previousAmountCents:
+                    latestBalancesByAccountId.get(account.id) ?? null,
+                type: account.type,
+            })),
+        latestDate: latestBalances[0]?.date ?? null,
+    }
+
+    return data
+}
+
 const Route = () => {
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault()
     }
 
