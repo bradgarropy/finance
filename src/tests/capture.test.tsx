@@ -3,30 +3,35 @@ import userEvent from "@testing-library/user-event"
 import {createRoutesStub} from "react-router"
 import {expect, test} from "vitest"
 
+import type {Account} from "~/db/queries"
 import Route from "~/routes/capture"
 
-const accounts = [
+type CaptureAccount = Pick<Account, "category" | "id" | "name" | "type"> & {
+    defaultAmountCents: number | null
+}
+
+const accounts: CaptureAccount[] = [
     {
         category: "cash" as const,
+        defaultAmountCents: null,
         id: 1,
         name: "Checking",
-        previousAmountCents: 123_456,
         type: "asset" as const,
     },
     {
         category: "credit" as const,
+        defaultAmountCents: null,
         id: 2,
         name: "Apple",
-        previousAmountCents: 4_200,
         type: "liability" as const,
     },
 ]
 
-const renderRoute = () => {
+const renderRoute = (routeAccounts: CaptureAccount[] = accounts) => {
     const Stub = createRoutesStub([
         {
             Component: Route,
-            loader: () => ({accounts}),
+            loader: () => ({accounts: routeAccounts}),
             path: "/capture",
         },
     ])
@@ -48,6 +53,8 @@ test("renders the date step", async () => {
         "aria-valuetext",
         "Step 1 of 3",
     )
+    expect(screen.getByText("Balance date")).toHaveClass("text-right")
+    expect(screen.getByLabelText("Balance date")).toHaveClass("text-right")
     expect(
         screen.getByRole("button", {name: "Begin capture"}),
     ).toBeInTheDocument()
@@ -71,9 +78,8 @@ test("walks through accounts and preserves their balances", async () => {
 
     const checkingInput = screen.getByLabelText("Current balance")
 
-    expect(checkingInput).toHaveValue("$1,234.56")
+    expect(checkingInput).toHaveValue("")
 
-    await user.clear(checkingInput)
     await user.type(checkingInput, "1300")
     await user.click(screen.getByRole("button", {name: "Next account"}))
 
@@ -81,13 +87,63 @@ test("walks through accounts and preserves their balances", async () => {
     expect(screen.getByText("credit")).toBeInTheDocument()
     expect(screen.getByText("liability")).toBeInTheDocument()
     expect(screen.getByText("3 of 3")).toBeInTheDocument()
-    expect(screen.getByLabelText("Current balance")).toHaveValue("$42.00")
+    expect(screen.getByLabelText("Current balance")).toHaveValue("")
     expect(
-        screen.queryByRole("button", {name: "Next account"}),
-    ).not.toBeInTheDocument()
+        screen.getByRole("button", {name: "Review balances"}),
+    ).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText("Current balance"), "42")
+    await user.click(screen.getByRole("button", {name: "Review balances"}))
+
+    expect(
+        screen.getByRole("heading", {name: "Review balances"}),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("heading", {name: "Assets"})).toBeInTheDocument()
+    expect(
+        screen.getByRole("heading", {name: "Liabilities"}),
+    ).toBeInTheDocument()
+    expect(screen.getByText("$1,300.00")).toBeInTheDocument()
+    expect(screen.getByText("$42.00")).toBeInTheDocument()
+    expect(screen.getByText("3 of 3")).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: "Save snapshot"})).toBeDisabled()
+
+    await user.click(screen.getByRole("button", {name: "Back"}))
+
+    expect(screen.getByText("Apple")).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", {name: "Back"}))
 
     expect(screen.getByText("Checking")).toBeInTheDocument()
     expect(screen.getByLabelText("Current balance")).toHaveValue("$1,300.00")
+})
+
+test("carries the Emergency and mortgage balances forward", async () => {
+    const user = userEvent.setup()
+
+    renderRoute([
+        {
+            category: "savings",
+            defaultAmountCents: 6_000_000,
+            id: 3,
+            name: "Emergency",
+            type: "asset",
+        },
+        {
+            category: "mortgage",
+            defaultAmountCents: 18_000_000,
+            id: 4,
+            name: "Mortgage",
+            type: "liability",
+        },
+    ])
+
+    await user.click(await screen.findByRole("button", {name: "Begin capture"}))
+
+    expect(screen.getByText("Emergency")).toBeInTheDocument()
+    expect(screen.getByLabelText("Current balance")).toHaveValue("$60,000.00")
+
+    await user.click(screen.getByRole("button", {name: "Next account"}))
+
+    expect(screen.getByText("Mortgage")).toBeInTheDocument()
+    expect(screen.getByLabelText("Current balance")).toHaveValue("$180,000.00")
 })
