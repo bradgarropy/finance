@@ -190,19 +190,27 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - Remote D1 import is NOT done. Remote import requires `--remote`; apply remote
   migrations/import only as a deliberate deployment action.
 
-## Phase 5 - Weekly input flow (FIRST feature after import)
+## Phase 5 - Weekly input flow - IMPLEMENTED, NEEDS LOCAL ROUND-TRIP
 
 Built first to validate that data writes into D1 accurately before any read/
 chart views sit on top of it.
 
-- Update `src/routes.ts`; delete sentryFrontend/Loader/Action routes + entries
-    - tests. (No app-side auth guard - Cloudflare Access gates every request at
-      the edge; see Phase 1.)
-- `/new`: stepped form (one account per step), prefilled with prior week's
-  value, date defaults to upcoming weekend; action upserts all balances via
-  `upsertBalances`.
-- Update `Navigation.tsx` with Add Entry (more links added as views land).
-- VERIFY: enter a week manually, confirm the round-trip against imported data.
+- `/capture` is linked from the main navigation.
+- The loader reads active accounts and latest balances from D1.
+- The stepped walkthrough starts with a balance date defaulted to today, then
+  collects one required nonnegative balance per active account.
+- Only accounts named `Emergency` and `Mortgage` carry their latest balances
+  forward; every other account starts blank. Zero is a valid balance.
+- The review step groups balances into Assets and Liabilities and requires a
+  complete snapshot before Save is enabled.
+- The action validates the submitted date and balance payload with Zod, converts
+  entered dollars to integer cents, upserts through `upsertBalances`, and
+  redirects to `/`. Existing `(account_id, date)` rows are updated rather than
+  duplicated.
+- Capture route, action, formatting, and `BalanceInput` behavior have focused
+  tests.
+- VERIFY: complete `/capture` against local D1, confirm the redirect and one row
+  per active account, then repeat the same date and confirm rows are updated.
 
 ## Phase 6 - Finance math
 
