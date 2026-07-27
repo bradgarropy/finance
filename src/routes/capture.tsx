@@ -1,10 +1,10 @@
-import {Button} from "@base-ui/react/button"
 import {Field} from "@base-ui/react/field"
 import {Progress} from "@base-ui/react/progress"
 import {useState} from "react"
 import {data, Form, redirect, useNavigation} from "react-router"
 
 import BalanceInput from "~/components/BalanceInput"
+import {Button} from "~/components/ui/button"
 import {getDatabase} from "~/db/client"
 import {getAccounts, getLatestBalances, upsertBalances} from "~/db/queries"
 import {captureSchema} from "~/schemas/capture"
@@ -202,9 +202,10 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
 
                             <Button
                                 disabled={accounts.length === 0}
+                                size="lg"
                                 type="button"
                                 onClick={handleBegin}
-                                className="flex h-12 w-full items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-300"
+                                className="h-12 w-full"
                             >
                                 Begin capture
                             </Button>
@@ -227,18 +228,21 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <Button
+                                size="lg"
                                 type="button"
+                                variant="outline"
                                 onClick={handleBack}
-                                className="flex h-12 items-center justify-center rounded-md border border-neutral-300 bg-white px-5 text-sm font-medium text-black transition hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                className="h-12"
                             >
                                 Back
                             </Button>
 
                             <Button
                                 disabled={isCurrentBalanceMissing}
+                                size="lg"
                                 type="button"
                                 onClick={handleNext}
-                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+                                className="h-12"
                             >
                                 {isLastAccount
                                     ? "Review balances"
@@ -301,17 +305,20 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <Button
+                                size="lg"
                                 type="button"
+                                variant="outline"
                                 onClick={handleBack}
-                                className="flex h-12 items-center justify-center rounded-md border border-neutral-300 bg-white px-5 text-sm font-medium text-black transition hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                className="h-12"
                             >
                                 Back
                             </Button>
 
                             <Button
                                 disabled={hasMissingBalances || isSaving}
+                                size="lg"
                                 type="submit"
-                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+                                className="h-12"
                             >
                                 {isSaving ? "Saving..." : "Save snapshot"}
                             </Button>
