@@ -1,6 +1,7 @@
 import {Field} from "@base-ui/react/field"
 import {NumberField} from "@base-ui/react/number-field"
 
+import {Badge} from "~/components/ui/badge"
 import type {Account} from "~/db/queries"
 
 type BalanceAccount = Pick<Account, "category" | "id" | "name" | "type">
@@ -22,14 +23,14 @@ const BalanceInput = ({account, onValueChange, value}: BalanceInputProps) => {
                 <div className="flex items-center justify-between gap-4">
                     <p className="text-xl font-semibold">{account.name}</p>
 
-                    <div className="flex items-center gap-2 text-xs font-medium capitalize text-neutral-600">
-                        <span className="rounded border border-neutral-200 bg-neutral-50 px-2 py-1">
+                    <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize">
                             {account.category}
-                        </span>
+                        </Badge>
 
-                        <span className="rounded border border-neutral-200 bg-neutral-50 px-2 py-1">
+                        <Badge variant="outline" className="capitalize">
                             {account.type}
-                        </span>
+                        </Badge>
                     </div>
                 </div>
             </div>
