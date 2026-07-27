@@ -58,7 +58,8 @@
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
         "react-router": "^7.15.0",
-        "recharts": "^3.9.1"
+        "recharts": "^3.9.1",
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@bradgarropy/eslint-config": "^3.2.0",
