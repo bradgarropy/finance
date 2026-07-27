@@ -2,16 +2,49 @@ import {Button} from "@base-ui/react/button"
 import {Field} from "@base-ui/react/field"
 import {Progress} from "@base-ui/react/progress"
 import {useState} from "react"
+import {data, Form, redirect, useNavigation} from "react-router"
 
 import BalanceInput from "~/components/BalanceInput"
 import {getDatabase} from "~/db/client"
-import {getAccounts, getLatestBalances} from "~/db/queries"
+import {getAccounts, getLatestBalances, upsertBalances} from "~/db/queries"
+import {captureSchema} from "~/schemas/capture"
 import {formatDate, formatDateInput, formatMoney} from "~/utils/format"
 
 import type {Route} from "./+types/capture"
 
 const formatBalance = (value: number | null) => {
     return value === null ? "-" : formatMoney(Math.round(value * 100))
+}
+
+export const action = async ({context, request}: Route.ActionArgs) => {
+    const formData = await request.formData()
+    let balances: unknown
+
+    try {
+        balances = JSON.parse(String(formData.get("balances")))
+    } catch {
+        balances = null
+    }
+
+    const result = captureSchema.safeParse({
+        balances,
+        date: formData.get("date"),
+    })
+
+    if (!result.success) {
+        return data(
+            {error: "Check the date and balances, then try again."},
+            {status: 400},
+        )
+    }
+
+    await upsertBalances(
+        getDatabase(context.cloudflare.env),
+        result.data.date,
+        result.data.balances,
+    )
+
+    return redirect("/")
 }
 
 export const loader = async ({context}: Route.LoaderArgs) => {
@@ -42,8 +75,9 @@ export const loader = async ({context}: Route.LoaderArgs) => {
     }
 }
 
-const Route = ({loaderData}: Route.ComponentProps) => {
+const Route = ({actionData, loaderData}: Route.ComponentProps) => {
     const {accounts} = loaderData
+    const navigation = useNavigation()
     const [date, setDate] = useState(() => formatDateInput(new Date()))
     const [step, setStep] = useState(0)
     const [balances, setBalances] = useState<Record<number, number | null>>(
@@ -67,6 +101,14 @@ const Route = ({loaderData}: Route.ComponentProps) => {
     const hasMissingBalances = accounts.some(
         account => balances[account.id] === null,
     )
+    const balanceEntries = accounts.flatMap(account => {
+        const amount = balances[account.id]
+
+        return amount === null
+            ? []
+            : [{accountId: account.id, amountCents: Math.round(amount * 100)}]
+    })
+    const isSaving = navigation.state === "submitting"
     const progressValue = isReviewStep ? totalSteps : step + 1
     const accountGroups = [
         {
@@ -207,7 +249,14 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                 ) : null}
 
                 {isReviewStep ? (
-                    <>
+                    <Form method="post" className="contents">
+                        <input name="date" type="hidden" value={date} />
+                        <input
+                            name="balances"
+                            type="hidden"
+                            value={JSON.stringify(balanceEntries)}
+                        />
+
                         <div className="space-y-3">
                             <h1 className="text-3xl font-bold">
                                 Review balances
@@ -260,14 +309,23 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                             </Button>
 
                             <Button
-                                disabled={hasMissingBalances}
-                                type="button"
+                                disabled={hasMissingBalances || isSaving}
+                                type="submit"
                                 className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
                             >
-                                Save snapshot
+                                {isSaving ? "Saving..." : "Save snapshot"}
                             </Button>
                         </div>
-                    </>
+
+                        {actionData?.error ? (
+                            <p
+                                role="alert"
+                                className="text-center text-sm text-red-600"
+                            >
+                                {actionData.error}
+                            </p>
+                        ) : null}
+                    </Form>
                 ) : null}
             </main>
         </>
