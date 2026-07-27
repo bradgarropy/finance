@@ -11,7 +11,7 @@ import {formatDate, formatDateInput, formatMoney} from "~/utils/format"
 import type {Route} from "./+types/capture"
 
 const formatBalance = (value: number | null) => {
-    return value === null ? "Not entered" : formatMoney(Math.round(value * 100))
+    return value === null ? "-" : formatMoney(Math.round(value * 100))
 }
 
 export const loader = async ({context}: Route.LoaderArgs) => {
