@@ -32,8 +32,7 @@ export const loader = async ({context}: Route.LoaderArgs) => {
             .map(account => ({
                 category: account.category,
                 defaultAmountCents:
-                    account.name === "Emergency" ||
-                    account.name === "Mortgage"
+                    account.name === "Emergency" || account.name === "Mortgage"
                         ? (latestBalancesByAccountId.get(account.id) ?? null)
                         : null,
                 id: account.id,
@@ -63,6 +62,11 @@ const Route = ({loaderData}: Route.ComponentProps) => {
     const currentAccount =
         step === 0 || isReviewStep ? null : accounts[step - 1]
     const isLastAccount = step === accounts.length
+    const isCurrentBalanceMissing =
+        currentAccount !== null && balances[currentAccount.id] === null
+    const hasMissingBalances = accounts.some(
+        account => balances[account.id] === null,
+    )
     const progressValue = isReviewStep ? totalSteps : step + 1
     const accountGroups = [
         {
@@ -189,9 +193,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                             </Button>
 
                             <Button
+                                disabled={isCurrentBalanceMissing}
                                 type="button"
                                 onClick={handleNext}
-                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
                             >
                                 {isLastAccount
                                     ? "Review balances"
@@ -255,9 +260,9 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                             </Button>
 
                             <Button
-                                disabled
+                                disabled={hasMissingBalances}
                                 type="button"
-                                className="flex h-12 items-center justify-center rounded-md bg-neutral-200 px-5 text-sm font-medium text-neutral-500"
+                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
                             >
                                 Save snapshot
                             </Button>

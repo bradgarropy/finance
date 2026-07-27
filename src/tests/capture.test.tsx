@@ -77,23 +77,27 @@ test("walks through accounts and preserves their balances", async () => {
     expect(screen.getByText("2 of 3")).toBeInTheDocument()
 
     const checkingInput = screen.getByLabelText("Current balance")
+    const nextButton = screen.getByRole("button", {name: "Next account"})
 
     expect(checkingInput).toHaveValue("")
+    expect(nextButton).toBeDisabled()
 
     await user.type(checkingInput, "1300")
-    await user.click(screen.getByRole("button", {name: "Next account"}))
+    expect(nextButton).toBeEnabled()
+    await user.click(nextButton)
 
     expect(screen.getByText("Apple")).toBeInTheDocument()
     expect(screen.getByText("credit")).toBeInTheDocument()
     expect(screen.getByText("liability")).toBeInTheDocument()
     expect(screen.getByText("3 of 3")).toBeInTheDocument()
     expect(screen.getByLabelText("Current balance")).toHaveValue("")
-    expect(
-        screen.getByRole("button", {name: "Review balances"}),
-    ).toBeInTheDocument()
+    const reviewButton = screen.getByRole("button", {name: "Review balances"})
+
+    expect(reviewButton).toBeDisabled()
 
     await user.type(screen.getByLabelText("Current balance"), "42")
-    await user.click(screen.getByRole("button", {name: "Review balances"}))
+    expect(reviewButton).toBeEnabled()
+    await user.click(reviewButton)
 
     expect(
         screen.getByRole("heading", {name: "Review balances"}),
@@ -105,7 +109,7 @@ test("walks through accounts and preserves their balances", async () => {
     expect(screen.getByText("$1,300.00")).toBeInTheDocument()
     expect(screen.getByText("$42.00")).toBeInTheDocument()
     expect(screen.getByText("3 of 3")).toBeInTheDocument()
-    expect(screen.getByRole("button", {name: "Save snapshot"})).toBeDisabled()
+    expect(screen.getByRole("button", {name: "Save snapshot"})).toBeEnabled()
 
     await user.click(screen.getByRole("button", {name: "Back"}))
 
