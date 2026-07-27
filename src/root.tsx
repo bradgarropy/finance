@@ -28,8 +28,8 @@ const App = () => {
                 <Links />
             </head>
 
-            <body className="bg-white text-black">
-                <div className="grid min-h-screen grid-rows-[auto_1fr_auto]">
+            <body className="relative bg-white text-black">
+                <div className="isolate grid min-h-screen grid-rows-[auto_1fr_auto]">
                     <Header />
 
                     <div className="p-8">
@@ -69,7 +69,7 @@ export const ErrorBoundary = () => {
                 <Links />
             </head>
 
-            <body className="bg-white text-black">
+            <body className="relative bg-white text-black">
                 <Error />
                 <ScrollRestoration />
                 <Scripts />

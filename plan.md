@@ -31,7 +31,9 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   pre-payoff (+ card totals), and the Savings calc uses available (post-payoff)
   checking = checking - outstanding credit.
 - History + Constants imported from CSV exports kept OUTSIDE the public repo.
-- Charts: Recharts (client-rendered).
+- UI stack: Base UI primitives + Tailwind styling. Use plain Tailwind for
+  simple layout and reach for Base UI as interactive primitives appear.
+- Charts: Recharts (client-rendered), with small local chart wrappers as needed.
 - Remove the Sentry demo routes.
 
 ## Data model
@@ -127,26 +129,33 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - CSV exports live outside the repo:
     - `~/Desktop/finances/Balances-Raw.csv`
     - `~/Desktop/finances/Constants-Baselines.csv`
+    - `~/Desktop/finances/Overview-Overview.csv`
+    - `~/Desktop/finances/Spending-Credit Cards.csv`
+    - `~/Desktop/finances/Saving-Savings.csv`
+    - `~/Desktop/finances/Saving-Ratio.csv`
 - Safety: `*.csv` and `*.numbers` are ignored. Repo holds only code.
-- `scripts/import/index.ts` takes CSV path args and reads files at runtime only.
-- Import modules:
-    - `scripts/import/index.ts`: CLI argument parsing and output summary.
-    - `scripts/import/payload.ts`: CSV-to-typed-payload parsing and transforms.
-    - `scripts/import/database.ts`: D1 write orchestration through Drizzle
-      helpers.
-    - `scripts/import/balances.ts`: account-name-to-ID mapping and grouping
-      balances by date for `upsertBalances`.
-    - `scripts/import/utils.ts`: CSV, money, date, and header helpers.
+- `scripts/import.ts` is a self-contained one-time importer. It takes a
+  required directory path and reads known CSV exports from that directory at
+  runtime only.
+- The importer lives in one file and does not have dedicated script tests; it is
+  verified by running it against local D1.
+- After writing, the importer reads D1 back and validates against spreadsheet
+  exports:
+    - Overview: assets, debt, and worth.
+    - Spending: NFCU, Apple, and total spend.
+    - Saving: spent, post-payoff checking, total saved, investments saved, and
+      savings saved where those fields are populated.
+    - Saving ratio: Investments/Savings split matches imported settings.
 - Local D1 import is the default write target:
 
     ```sh
-    npx tsx scripts/import/index.ts --balances ~/Desktop/finances/Balances-Raw.csv --constants ~/Desktop/finances/Constants-Baselines.csv
+    npx tsx scripts/import.ts ~/Desktop/finances
     ```
 
 - Remote D1 import requires an explicit flag:
 
     ```sh
-    npx tsx scripts/import/index.ts --balances ~/Desktop/finances/Balances-Raw.csv --constants ~/Desktop/finances/Constants-Baselines.csv --remote
+    npx tsx scripts/import.ts ~/Desktop/finances --remote
     ```
 
 - Import behavior:
@@ -181,19 +190,27 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - Remote D1 import is NOT done. Remote import requires `--remote`; apply remote
   migrations/import only as a deliberate deployment action.
 
-## Phase 5 - Weekly input flow (FIRST feature after import)
+## Phase 5 - Weekly input flow - IMPLEMENTED, NEEDS LOCAL ROUND-TRIP
 
 Built first to validate that data writes into D1 accurately before any read/
 chart views sit on top of it.
 
-- Update `src/routes.ts`; delete sentryFrontend/Loader/Action routes + entries
-    - tests. (No app-side auth guard - Cloudflare Access gates every request at
-      the edge; see Phase 1.)
-- `/new`: stepped form (one account per step), prefilled with prior week's
-  value, date defaults to upcoming weekend; action upserts all balances via
-  `upsertBalances`.
-- Update `Navigation.tsx` with Add Entry (more links added as views land).
-- VERIFY: enter a week manually, confirm the round-trip against imported data.
+- `/capture` is linked from the main navigation.
+- The loader reads active accounts and latest balances from D1.
+- The stepped walkthrough starts with a balance date defaulted to today, then
+  collects one required nonnegative balance per active account.
+- Only accounts named `Emergency` and `Mortgage` carry their latest balances
+  forward; every other account starts blank. Zero is a valid balance.
+- The review step groups balances into Assets and Liabilities and requires a
+  complete snapshot before Save is enabled.
+- The action validates the submitted date and balance payload with Zod, converts
+  entered dollars to integer cents, upserts through `upsertBalances`, and
+  redirects to `/`. Existing `(account_id, date)` rows are updated rather than
+  duplicated.
+- Capture route, action, formatting, and `BalanceInput` behavior have focused
+  tests.
+- VERIFY: complete `/capture` against local D1, confirm the redirect and one row
+  per active account, then repeat the same date and confirm rows are updated.
 
 ## Phase 6 - Finance math
 

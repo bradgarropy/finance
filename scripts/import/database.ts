@@ -1,6 +1,6 @@
 import {getPlatformProxy} from "wrangler"
 
-import {db} from "~/db/client"
+import {getDatabase} from "~/db/client"
 import {
     getAccounts,
     setSettings,
@@ -31,16 +31,16 @@ export const writeImport = async (
     })
 
     try {
-        const database = db(platform.env)
+        const db = getDatabase(platform.env)
 
-        await upsertAccounts(database, payload.accounts)
-        await setSettings(database, payload.settings)
+        await upsertAccounts(db, payload.accounts)
+        await setSettings(db, payload.settings)
 
-        const accounts = await getAccounts(database)
+        const accounts = await getAccounts(db)
         const balancesByDate = groupBalancesByDate(payload.balances, accounts)
 
         for (const [date, balances] of balancesByDate) {
-            await upsertBalances(database, date, balances)
+            await upsertBalances(db, date, balances)
         }
 
         return {
