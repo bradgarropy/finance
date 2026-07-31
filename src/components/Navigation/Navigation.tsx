@@ -7,6 +7,10 @@ const Navigation = () => {
                 Home
             </NavLink>
 
+            <NavLink to="/accounts" prefetch="intent">
+                Accounts
+            </NavLink>
+
             <NavLink to="/capture" prefetch="intent">
                 Capture
             </NavLink>
