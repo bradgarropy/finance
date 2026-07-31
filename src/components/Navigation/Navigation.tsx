@@ -4,7 +4,7 @@ const Navigation = () => {
     return (
         <nav className="flex gap-4 font-bold">
             <NavLink to="/" prefetch="intent">
-                Home
+                Overview
             </NavLink>
 
             <NavLink to="/accounts" prefetch="intent">

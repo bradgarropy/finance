@@ -190,7 +190,7 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - Remote D1 import is NOT done. Remote import requires `--remote`; apply remote
   migrations/import only as a deliberate deployment action.
 
-## Phase 5 - Weekly input flow - IMPLEMENTED, NEEDS LOCAL ROUND-TRIP
+## Phase 5 - Weekly input flow - DONE
 
 Built first to validate that data writes into D1 accurately before any read/
 chart views sit on top of it.
@@ -209,8 +209,20 @@ chart views sit on top of it.
   duplicated.
 - Capture route, action, formatting, and `BalanceInput` behavior have focused
   tests.
-- VERIFY: complete `/capture` against local D1, confirm the redirect and one row
-  per active account, then repeat the same date and confirm rows are updated.
+- Local round-trip verified: completed `/capture` against local D1, confirmed
+  one row per active account, then repeated the same date and confirmed the
+  existing rows were updated.
+
+## Account management - DONE
+
+- `/accounts` is linked from the main navigation and separates active and
+  archived accounts.
+- Accounts can be created and edited with explicit name, type, and category.
+- Accounts can be archived and unarchived; archived accounts are excluded from
+  future balance captures.
+- Permanent deletion is allowed only for accounts without balance history.
+  Accounts with historical balances must be archived instead.
+- Account mutations are validated with Zod and use typed Drizzle helpers.
 
 ## Phase 6 - Finance math
 
@@ -225,7 +237,7 @@ chart views sit on top of it.
 (Cloudflare Access gates every request at the edge; no app-side auth guard.)
 
 - `/` Overview: assets/liabilities/net-worth table + chart (Assets = type=asset,
-  Debt = type=liability); growth-rate window selector (presets + all-time +
+  Liabilities = type=liability); growth-rate window selector (presets + all-time +
   since-week).
 - `/spending`: weekly total (category=credit: NFCU+Apple), overall avg, rolling
   avg with same window selector; spending trend chart.
