@@ -6,16 +6,7 @@ test("home page", async ({page}) => {
 
     await expect(page.getByRole("heading", {name: "Home"})).toBeVisible()
     await expect(page.getByRole("link", {name: "Home"})).toBeVisible()
-    await expect(page.getByRole("link", {name: "About"})).toBeVisible()
-})
-
-test("about page", async ({page}) => {
-    await page.goto("localhost:3000/about")
-    await expect(page).toHaveTitle("💵 finance | about")
-
-    await expect(page.getByRole("heading", {name: "About"})).toBeVisible()
-    await expect(page.getByRole("link", {name: "Home"})).toBeVisible()
-    await expect(page.getByRole("link", {name: "About"})).toBeVisible()
+    await expect(page.getByRole("link", {name: "Capture"})).toBeVisible()
 })
 
 test("navigates", async ({page}) => {
@@ -24,8 +15,10 @@ test("navigates", async ({page}) => {
     await expect(page).toHaveTitle("💵 finance | home")
     await expect(page.getByRole("heading", {name: "Home"})).toBeVisible()
 
-    await page.getByRole("link", {name: "About"}).click()
+    await page.getByRole("link", {name: "Capture"}).click()
 
-    await expect(page).toHaveTitle("💵 finance | about")
-    await expect(page.getByRole("heading", {name: "About"})).toBeVisible()
+    await expect(page).toHaveTitle("💵 finance | capture")
+    await expect(
+        page.getByRole("heading", {name: "When are these balances from?"}),
+    ).toBeVisible()
 })

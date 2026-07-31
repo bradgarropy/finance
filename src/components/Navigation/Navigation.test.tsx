@@ -11,7 +11,8 @@ test("renders", () => {
         </MemoryRouter>,
     )
 
-    expect(screen.getByText("Home")).toBeInTheDocument()
-    expect(screen.getByText("About")).toBeInTheDocument()
-    expect(screen.getByText("Capture")).toBeInTheDocument()
+    expect(screen.getAllByRole("link").map(link => link.textContent)).toEqual([
+        "Home",
+        "Capture",
+    ])
 })
