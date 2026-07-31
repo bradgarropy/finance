@@ -1,4 +1,4 @@
-import * as React from "react"
+import type * as React from "react"
 
 import {cn} from "~/lib/utils"
 
@@ -101,11 +101,11 @@ function TableCaption({className, ...props}: React.ComponentProps<"caption">) {
 
 export {
     Table,
-    TableHeader,
     TableBody,
+    TableCaption,
+    TableCell,
     TableFooter,
     TableHead,
+    TableHeader,
     TableRow,
-    TableCell,
-    TableCaption,
 }
