@@ -13,6 +13,7 @@ test("renders", () => {
 
     expect(screen.getAllByRole("link").map(link => link.textContent)).toEqual([
         "Home",
+        "Accounts",
         "Capture",
     ])
 })

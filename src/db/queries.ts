@@ -1,4 +1,4 @@
-import {asc, desc, eq, sql} from "drizzle-orm"
+import {asc, desc, eq, max, sql} from "drizzle-orm"
 
 import type {Database} from "~/db/client"
 import {accounts, balances, settings} from "~/db/schema"
@@ -18,6 +18,10 @@ export type Balance = BalanceSelect
 export type Settings = SettingsSelect
 
 export type AccountInput = Omit<AccountInsert, "id">
+export type AccountDetailsInput = Pick<
+    AccountInsert,
+    "category" | "name" | "type"
+>
 export type BalanceInput = Pick<BalanceInsert, "accountId" | "amountCents">
 export type SettingsInput = Omit<SettingsInsert, "id">
 
@@ -26,6 +30,52 @@ export const getAccounts = (db: Database) => {
         .select()
         .from(accounts)
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
+}
+
+export const createAccount = async (
+    db: Database,
+    input: AccountDetailsInput,
+) => {
+    const rows = await db
+        .select({sortOrder: max(accounts.sortOrder)})
+        .from(accounts)
+
+    return db.insert(accounts).values({
+        ...input,
+        sortOrder: (rows[0]?.sortOrder ?? 0) + 10,
+    })
+}
+
+export const updateAccount = (
+    db: Database,
+    id: number,
+    input: AccountDetailsInput,
+) => {
+    return db.update(accounts).set(input).where(eq(accounts.id, id))
+}
+
+export const archiveAccount = (db: Database, id: number) => {
+    return db.update(accounts).set({archived: true}).where(eq(accounts.id, id))
+}
+
+export const unarchiveAccount = (db: Database, id: number) => {
+    return db.update(accounts).set({archived: false}).where(eq(accounts.id, id))
+}
+
+export const deleteAccount = async (db: Database, id: number) => {
+    const accountBalances = await db
+        .select({id: balances.id})
+        .from(balances)
+        .where(eq(balances.accountId, id))
+        .limit(1)
+
+    if (accountBalances.length > 0) {
+        return false
+    }
+
+    await db.delete(accounts).where(eq(accounts.id, id))
+
+    return true
 }
 
 export const getBalancesByDate = (db: Database, date: string) => {
