@@ -40,6 +40,7 @@ const renderRoute = (routeAccounts: CaptureAccount[] = accounts) => {
 }
 
 test("renders the date step", async () => {
+    const user = userEvent.setup()
     renderRoute()
 
     expect(
@@ -54,10 +55,17 @@ test("renders the date step", async () => {
         "Step 1 of 3",
     )
     expect(screen.getByText("Balance date")).toHaveClass("text-right")
-    expect(screen.getByLabelText("Balance date")).toHaveClass("text-right")
+    const datePicker = screen.getByLabelText("Balance date")
+
+    expect(datePicker).toHaveClass("text-right")
+    expect(datePicker).toHaveAttribute("type", "button")
     expect(
         screen.getByRole("button", {name: "Begin capture"}),
     ).toBeInTheDocument()
+
+    await user.click(datePicker)
+
+    expect(screen.getByRole("grid")).toBeInTheDocument()
 })
 
 test("walks through accounts and preserves their balances", async () => {

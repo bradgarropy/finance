@@ -1,9 +1,13 @@
 import {Field} from "@base-ui/react/field"
+import {format, parseISO} from "date-fns"
+import {CalendarIcon} from "lucide-react"
 import {useState} from "react"
 import {data, Form, redirect, useNavigation} from "react-router"
 
 import BalanceInput from "~/components/BalanceInput"
 import {Button} from "~/components/ui/button"
+import {Calendar} from "~/components/ui/calendar"
+import {Popover, PopoverContent, PopoverTrigger} from "~/components/ui/popover"
 import {Progress, ProgressLabel, ProgressValue} from "~/components/ui/progress"
 import {getDatabase} from "~/db/client"
 import {getAccounts, getLatestBalances, upsertBalances} from "~/db/queries"
@@ -79,6 +83,7 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
     const {accounts} = loaderData
     const navigation = useNavigation()
     const [date, setDate] = useState(() => formatDateInput(new Date()))
+    const [datePickerOpen, setDatePickerOpen] = useState(false)
     const [step, setStep] = useState(0)
     const [balances, setBalances] = useState<Record<number, number | null>>(
         () =>
@@ -173,27 +178,58 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
                         </div>
 
                         <div className="space-y-8">
-                            <Field.Root className="space-y-2" name="date">
-                                <Field.Label className="block text-right text-sm font-medium">
+                            <Field.Root
+                                className="flex flex-col gap-2"
+                                name="date"
+                            >
+                                <Field.Label
+                                    id="balance-date-label"
+                                    className="block text-right text-sm font-medium"
+                                >
                                     Balance date
                                 </Field.Label>
 
-                                <Field.Control
-                                    required
-                                    type="date"
-                                    value={date}
-                                    onChange={event =>
-                                        setDate(event.target.value)
-                                    }
-                                    className="h-14 w-full rounded-md border border-neutral-300 bg-white px-4 text-right text-lg tabular-nums shadow-sm outline-none transition focus:border-black focus:ring-2 focus:ring-black/10 [&::-webkit-date-and-time-value]:text-right [&::-webkit-datetime-edit]:text-right"
-                                />
-
-                                <Field.Error
-                                    className="text-sm text-red-600"
-                                    match="valueMissing"
+                                <Popover
+                                    open={datePickerOpen}
+                                    onOpenChange={setDatePickerOpen}
                                 >
-                                    Choose a balance date.
-                                </Field.Error>
+                                    <PopoverTrigger
+                                        render={
+                                            <Button
+                                                aria-labelledby="balance-date-label"
+                                                size="lg"
+                                                type="button"
+                                                variant="outline"
+                                                className="h-14 w-full justify-between px-4 text-right text-lg font-normal tabular-nums"
+                                            />
+                                        }
+                                    >
+                                        <CalendarIcon />
+                                        <span className="ml-auto">
+                                            {formatDate(date)}
+                                        </span>
+                                    </PopoverTrigger>
+
+                                    <PopoverContent
+                                        align="end"
+                                        className="w-auto p-0"
+                                    >
+                                        <Calendar
+                                            required
+                                            mode="single"
+                                            selected={parseISO(date)}
+                                            onSelect={selectedDate => {
+                                                setDate(
+                                                    format(
+                                                        selectedDate,
+                                                        "yyyy-MM-dd",
+                                                    ),
+                                                )
+                                                setDatePickerOpen(false)
+                                            }}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </Field.Root>
 
                             <Button
