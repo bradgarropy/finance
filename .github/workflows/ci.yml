@@ -86,6 +86,8 @@ jobs:
               run: npm ci
             - name: "🌐 browsers"
               run: npx playwright install --with-deps
+            - name: "🗄️ database"
+              run: npm run db:migrate
             - name: "🛠️ build"
               run: npm run build
             - name: "🎭 e2e"
