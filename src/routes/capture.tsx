@@ -1,10 +1,10 @@
 import {Field} from "@base-ui/react/field"
-import {Progress} from "@base-ui/react/progress"
 import {useState} from "react"
 import {data, Form, redirect, useNavigation} from "react-router"
 
 import BalanceInput from "~/components/BalanceInput"
 import {Button} from "~/components/ui/button"
+import {Progress, ProgressLabel, ProgressValue} from "~/components/ui/progress"
 import {getDatabase} from "~/db/client"
 import {getAccounts, getLatestBalances, upsertBalances} from "~/db/queries"
 import {captureSchema} from "~/schemas/capture"
@@ -138,30 +138,26 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
             <title>💵 finance | capture</title>
 
             <main className="mx-auto flex w-full max-w-xl flex-col gap-10 py-8 sm:py-16">
-                <Progress.Root
-                    className="flex items-center gap-3"
+                <Progress
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 [&_[data-slot=progress-track]]:col-start-2 [&_[data-slot=progress-track]]:row-start-1"
                     max={totalSteps}
                     value={progressValue}
                     getAriaValueText={(_, value) =>
                         `Step ${value ?? 0} of ${totalSteps}`
                     }
                 >
-                    <Progress.Label className="text-sm font-medium text-neutral-600">
+                    <ProgressLabel className="text-muted-foreground">
                         {step === 0
                             ? "Date"
                             : isReviewStep
                               ? "Review"
                               : "Account"}
-                    </Progress.Label>
+                    </ProgressLabel>
 
-                    <Progress.Track className="h-1 flex-1 overflow-hidden rounded-full bg-neutral-200">
-                        <Progress.Indicator className="rounded-full bg-black transition-[width]" />
-                    </Progress.Track>
-
-                    <Progress.Value className="text-sm tabular-nums text-neutral-500">
+                    <ProgressValue className="col-start-3 row-start-1 ml-0">
                         {(_, value) => `${value} of ${totalSteps}`}
-                    </Progress.Value>
-                </Progress.Root>
+                    </ProgressValue>
+                </Progress>
 
                 {step === 0 ? (
                     <>
