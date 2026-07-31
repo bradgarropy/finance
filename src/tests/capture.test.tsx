@@ -126,7 +126,7 @@ test("walks through accounts and preserves their balances", async () => {
     await user.click(screen.getByRole("button", {name: "Back"}))
 
     expect(screen.getByText("Checking")).toBeInTheDocument()
-    expect(screen.getByLabelText("Current balance")).toHaveValue("$1,300.00")
+    expect(screen.getByLabelText("Current balance")).toHaveValue("1,300.00")
 })
 
 test("carries the Emergency and mortgage balances forward", async () => {
@@ -152,10 +152,10 @@ test("carries the Emergency and mortgage balances forward", async () => {
     await user.click(await screen.findByRole("button", {name: "Begin capture"}))
 
     expect(screen.getByText("Emergency")).toBeInTheDocument()
-    expect(screen.getByLabelText("Current balance")).toHaveValue("$60,000.00")
+    expect(screen.getByLabelText("Current balance")).toHaveValue("60,000.00")
 
     await user.click(screen.getByRole("button", {name: "Next account"}))
 
     expect(screen.getByText("Mortgage")).toBeInTheDocument()
-    expect(screen.getByLabelText("Current balance")).toHaveValue("$180,000.00")
+    expect(screen.getByLabelText("Current balance")).toHaveValue("180,000.00")
 })

@@ -36,7 +36,8 @@ test("renders account details and a formatted balance", () => {
         }),
     ).toBeInTheDocument()
     expect(screen.getByText("Current balance")).toHaveClass("text-right")
-    expect(screen.getByLabelText("Current balance")).toHaveValue("$1,234.56")
+    expect(screen.getByText("$")).toBeInTheDocument()
+    expect(screen.getByLabelText("Current balance")).toHaveValue("1,234.56")
 })
 
 test("accepts numeric values and rejects letters", async () => {
@@ -51,7 +52,7 @@ test("accepts numeric values and rejects letters", async () => {
 
     await user.tab()
 
-    expect(input).toHaveValue("$1,300.00")
+    expect(input).toHaveValue("1,300.00")
 
     await user.click(input)
     await user.clear(input)
