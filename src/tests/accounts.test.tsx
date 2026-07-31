@@ -1,4 +1,5 @@
 import {render, screen, within} from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import {createRoutesStub} from "react-router"
 import {expect, test} from "vitest"
 
@@ -60,4 +61,31 @@ test("shows empty states", async () => {
 
     expect(screen.getByText("No active accounts.")).toBeInTheDocument()
     expect(screen.getByText("No archived accounts.")).toBeInTheDocument()
+})
+
+test("opens the new account dialog", async () => {
+    const user = userEvent.setup()
+    renderRoute(accounts)
+
+    await user.click(await screen.findByRole("button", {name: "New account"}))
+
+    expect(
+        screen.getByRole("dialog", {name: "New account"}),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("textbox", {name: "Name"})).toHaveValue("")
+})
+
+test("opens an account for editing from its actions menu", async () => {
+    const user = userEvent.setup()
+    renderRoute(accounts)
+
+    await user.click(
+        await screen.findByRole("button", {name: "Actions for Checking"}),
+    )
+    await user.click(await screen.findByRole("menuitem", {name: "Edit"}))
+
+    expect(
+        screen.getByRole("dialog", {name: "Edit account"}),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("textbox", {name: "Name"})).toHaveValue("Checking")
 })
