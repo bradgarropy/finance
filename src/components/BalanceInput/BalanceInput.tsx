@@ -1,6 +1,13 @@
-import {Field} from "@base-ui/react/field"
+import {Field as FieldPrimitive} from "@base-ui/react/field"
 import {NumberField} from "@base-ui/react/number-field"
 
+import {Badge} from "~/components/ui/badge"
+import {Field, FieldError, FieldLabel} from "~/components/ui/field"
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupText,
+} from "~/components/ui/input-group"
 import type {Account} from "~/db/queries"
 
 type BalanceAccount = Pick<Account, "category" | "id" | "name" | "type">
@@ -12,6 +19,8 @@ type BalanceInputProps = {
 }
 
 const BalanceInput = ({account, onValueChange, value}: BalanceInputProps) => {
+    const inputId = `account-${account.id}`
+
     return (
         <>
             <div className="space-y-3">
@@ -22,46 +31,61 @@ const BalanceInput = ({account, onValueChange, value}: BalanceInputProps) => {
                 <div className="flex items-center justify-between gap-4">
                     <p className="text-xl font-semibold">{account.name}</p>
 
-                    <div className="flex items-center gap-2 text-xs font-medium capitalize text-neutral-600">
-                        <span className="rounded border border-neutral-200 bg-neutral-50 px-2 py-1">
+                    <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize">
                             {account.category}
-                        </span>
+                        </Badge>
 
-                        <span className="rounded border border-neutral-200 bg-neutral-50 px-2 py-1">
+                        <Badge variant="outline" className="capitalize">
                             {account.type}
-                        </span>
+                        </Badge>
                     </div>
                 </div>
             </div>
 
-            <Field.Root name={`account-${account.id}`}>
+            <FieldPrimitive.Root name={inputId} render={<Field />}>
                 <NumberField.Root
                     required
-                    className="space-y-2"
                     format={{
-                        currency: "USD",
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2,
-                        style: "currency",
+                        style: "decimal",
                     }}
                     min={0}
                     step={0.01}
                     value={value}
                     onValueChange={onValueChange}
                 >
-                    <Field.Label className="block text-right text-sm font-medium">
+                    <FieldPrimitive.Label
+                        render={
+                            <FieldLabel
+                                htmlFor={inputId}
+                                className="ml-auto text-right"
+                            />
+                        }
+                    >
                         Current balance
-                    </Field.Label>
+                    </FieldPrimitive.Label>
 
-                    <NumberField.Group>
-                        <NumberField.Input className="h-14 w-full rounded-md border border-neutral-300 bg-white px-4 text-right text-lg tabular-nums shadow-sm outline-none transition focus:border-black focus:ring-2 focus:ring-black/10" />
+                    <NumberField.Group render={<InputGroup className="h-14" />}>
+                        <NumberField.Input
+                            id={inputId}
+                            data-slot="input-group-control"
+                            className="h-full min-w-0 flex-1 bg-transparent px-4 text-right text-lg tabular-nums outline-none"
+                        />
+
+                        <InputGroupAddon>
+                            <InputGroupText className="text-lg">
+                                $
+                            </InputGroupText>
+                        </InputGroupAddon>
                     </NumberField.Group>
                 </NumberField.Root>
 
-                <Field.Error className="text-sm text-red-600">
+                <FieldPrimitive.Error render={<FieldError />}>
                     Enter a balance.
-                </Field.Error>
-            </Field.Root>
+                </FieldPrimitive.Error>
+            </FieldPrimitive.Root>
         </>
     )
 }

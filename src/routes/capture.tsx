@@ -1,10 +1,11 @@
-import {Button} from "@base-ui/react/button"
 import {Field} from "@base-ui/react/field"
-import {Progress} from "@base-ui/react/progress"
 import {useState} from "react"
 import {data, Form, redirect, useNavigation} from "react-router"
 
 import BalanceInput from "~/components/BalanceInput"
+import DateInput from "~/components/DateInput"
+import {Button} from "~/components/ui/button"
+import {Progress, ProgressLabel, ProgressValue} from "~/components/ui/progress"
 import {getDatabase} from "~/db/client"
 import {getAccounts, getLatestBalances, upsertBalances} from "~/db/queries"
 import {captureSchema} from "~/schemas/capture"
@@ -138,30 +139,26 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
             <title>💵 finance | capture</title>
 
             <main className="mx-auto flex w-full max-w-xl flex-col gap-10 py-8 sm:py-16">
-                <Progress.Root
-                    className="flex items-center gap-3"
+                <Progress
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 **:data-[slot=progress-track]:col-start-2 **[data-slot=progress-track]:row-start-1"
                     max={totalSteps}
                     value={progressValue}
                     getAriaValueText={(_, value) =>
                         `Step ${value ?? 0} of ${totalSteps}`
                     }
                 >
-                    <Progress.Label className="text-sm font-medium text-neutral-600">
+                    <ProgressLabel className="text-muted-foreground">
                         {step === 0
                             ? "Date"
                             : isReviewStep
                               ? "Review"
                               : "Account"}
-                    </Progress.Label>
+                    </ProgressLabel>
 
-                    <Progress.Track className="h-1 flex-1 overflow-hidden rounded-full bg-neutral-200">
-                        <Progress.Indicator className="rounded-full bg-black transition-[width]" />
-                    </Progress.Track>
-
-                    <Progress.Value className="text-sm tabular-nums text-neutral-500">
+                    <ProgressValue className="col-start-3 row-start-1 ml-0">
                         {(_, value) => `${value} of ${totalSteps}`}
-                    </Progress.Value>
-                </Progress.Root>
+                    </ProgressValue>
+                </Progress>
 
                 {step === 0 ? (
                     <>
@@ -177,34 +174,30 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
                         </div>
 
                         <div className="space-y-8">
-                            <Field.Root className="space-y-2" name="date">
-                                <Field.Label className="block text-right text-sm font-medium">
+                            <Field.Root
+                                className="flex flex-col gap-2"
+                                name="date"
+                            >
+                                <Field.Label
+                                    id="balance-date-label"
+                                    className="block text-right text-sm font-medium"
+                                >
                                     Balance date
                                 </Field.Label>
 
-                                <Field.Control
-                                    required
-                                    type="date"
+                                <DateInput
+                                    aria-labelledby="balance-date-label"
                                     value={date}
-                                    onChange={event =>
-                                        setDate(event.target.value)
-                                    }
-                                    className="h-14 w-full rounded-md border border-neutral-300 bg-white px-4 text-right text-lg tabular-nums shadow-sm outline-none transition focus:border-black focus:ring-2 focus:ring-black/10 [&::-webkit-date-and-time-value]:text-right [&::-webkit-datetime-edit]:text-right"
+                                    onValueChange={setDate}
                                 />
-
-                                <Field.Error
-                                    className="text-sm text-red-600"
-                                    match="valueMissing"
-                                >
-                                    Choose a balance date.
-                                </Field.Error>
                             </Field.Root>
 
                             <Button
                                 disabled={accounts.length === 0}
+                                size="lg"
                                 type="button"
                                 onClick={handleBegin}
-                                className="flex h-12 w-full items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-300"
+                                className="h-12 w-full"
                             >
                                 Begin capture
                             </Button>
@@ -227,18 +220,21 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <Button
+                                size="lg"
                                 type="button"
+                                variant="outline"
                                 onClick={handleBack}
-                                className="flex h-12 items-center justify-center rounded-md border border-neutral-300 bg-white px-5 text-sm font-medium text-black transition hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                className="h-12"
                             >
                                 Back
                             </Button>
 
                             <Button
                                 disabled={isCurrentBalanceMissing}
+                                size="lg"
                                 type="button"
                                 onClick={handleNext}
-                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+                                className="h-12"
                             >
                                 {isLastAccount
                                     ? "Review balances"
@@ -301,17 +297,20 @@ const Route = ({actionData, loaderData}: Route.ComponentProps) => {
 
                         <div className="grid grid-cols-2 gap-3">
                             <Button
+                                size="lg"
                                 type="button"
+                                variant="outline"
                                 onClick={handleBack}
-                                className="flex h-12 items-center justify-center rounded-md border border-neutral-300 bg-white px-5 text-sm font-medium text-black transition hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                className="h-12"
                             >
                                 Back
                             </Button>
 
                             <Button
                                 disabled={hasMissingBalances || isSaving}
+                                size="lg"
                                 type="submit"
-                                className="flex h-12 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+                                className="h-12"
                             >
                                 {isSaving ? "Saving..." : "Save snapshot"}
                             </Button>
