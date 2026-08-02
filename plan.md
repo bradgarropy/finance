@@ -126,17 +126,13 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 
 ## Phase 4 - Historical import (no data committed to repo) - DONE LOCAL
 
-- CSV exports live outside the repo:
-    - `~/Desktop/finances/Balances-Raw.csv`
-    - `~/Desktop/finances/Constants-Baselines.csv`
-    - `~/Desktop/finances/Overview-Overview.csv`
-    - `~/Desktop/finances/Spending-Credit Cards.csv`
-    - `~/Desktop/finances/Saving-Savings.csv`
-    - `~/Desktop/finances/Saving-Ratio.csv`
+- The source `.numbers` document lives outside the repo. The importer uses
+  Numbers on macOS to export its tables into a temporary directory, runs the
+  existing CSV import and validation pipeline, then deletes the temporary CSVs.
 - Safety: `*.csv` and `*.numbers` are ignored. Repo holds only code.
 - `scripts/import.ts` is a self-contained one-time importer. It takes a
-  required directory path and reads known CSV exports from that directory at
-  runtime only.
+  required `.numbers` file path. Numbers must be installed, and macOS may ask
+  for permission for the invoking terminal to control Numbers on the first run.
 - The importer lives in one file and does not have dedicated script tests; it is
   verified by running it against local D1.
 - After writing, the importer reads D1 back and validates against spreadsheet
@@ -149,13 +145,13 @@ introduced, restore the in-Worker JWT verification so it fails closed.
 - Local D1 import is the default write target:
 
     ```sh
-    npx tsx scripts/import.ts ~/Desktop/finances
+    npx tsx scripts/import.ts <path-to-finances.numbers>
     ```
 
 - Remote D1 import requires an explicit flag:
 
     ```sh
-    npx tsx scripts/import.ts ~/Desktop/finances --remote
+    npx tsx scripts/import.ts <path-to-finances.numbers> --remote
     ```
 
 - Import behavior:

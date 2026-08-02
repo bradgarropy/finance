@@ -1,4 +1,6 @@
-import {existsSync, readFileSync, statSync} from "node:fs"
+import {execFileSync} from "node:child_process"
+import {existsSync, mkdtempSync, readFileSync, rmSync, statSync} from "node:fs"
+import {tmpdir} from "node:os"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
 
@@ -22,7 +24,7 @@ import {
 } from "~/db/queries"
 
 type Args = {
-    dir?: string
+    file?: string
     remote: boolean
 }
 
@@ -202,8 +204,8 @@ const parseArgs = (argv: string[]): Args => {
             continue
         }
 
-        if (!args.dir) {
-            args.dir = arg
+        if (!args.file) {
+            args.file = arg
         }
     }
 
@@ -240,6 +242,57 @@ const assertRequiredDirectory = (label: string, value?: string) => {
     }
 
     return resolved
+}
+
+const assertRequiredNumbersFile = (value?: string) => {
+    const resolved = assertRequiredPath("Numbers file", value)
+
+    if (path.extname(resolved).toLowerCase() !== ".numbers") {
+        throw new Error(`Expected a .numbers file, received: ${resolved}`)
+    }
+
+    return resolved
+}
+
+const numbersExportScript = `
+on run argv
+    set inputPath to item 1 of argv
+    set outputPath to item 2 of argv
+
+    tell application "Numbers"
+        set sourceDocument to open POSIX file inputPath
+
+        try
+            export sourceDocument to POSIX file outputPath as CSV
+        on error errorMessage number errorNumber
+            close sourceDocument saving no
+            error errorMessage number errorNumber
+        end try
+
+        close sourceDocument saving no
+    end tell
+end run
+`
+
+const exportNumbers = (filePath: string) => {
+    if (process.platform !== "darwin") {
+        throw new Error("Importing a Numbers file requires macOS and Numbers.")
+    }
+
+    const exportDir = mkdtempSync(path.join(tmpdir(), "finance-import-"))
+
+    try {
+        execFileSync(
+            "osascript",
+            ["-e", numbersExportScript, "--", filePath, exportDir],
+            {stdio: "inherit"},
+        )
+    } catch (error) {
+        rmSync(exportDir, {force: true, recursive: true})
+        throw error
+    }
+
+    return exportDir
 }
 
 const getImportPaths = (dir?: string) => {
@@ -902,8 +955,7 @@ const formatCents = (cents: number) => moneyFormatter.format(cents / 100)
 const getHeading = (args: Args) =>
     args.remote ? "Remote import complete" : "Local import complete"
 
-const main = async () => {
-    const args = parseArgs(process.argv.slice(2))
+const runImport = async (args: Args, dir: string) => {
     const {
         balances: balancesPath,
         constants: constantsPath,
@@ -911,7 +963,7 @@ const main = async () => {
         saving: savingPath,
         savingRatio: savingRatioPath,
         spending: spendingPath,
-    } = getImportPaths(args.dir)
+    } = getImportPaths(dir)
 
     const balanceHeaders = readHeaders(balancesPath)
     const balanceRows = readCsv(balancesPath)
@@ -979,6 +1031,18 @@ const main = async () => {
         `  excess split: ${payload.settings.excessInvestPct}/${payload.settings.excessSavePct}`,
     )
     console.log(`  default window: ${payload.settings.defaultWindow} weeks`)
+}
+
+const main = async () => {
+    const args = parseArgs(process.argv.slice(2))
+    const numbersFile = assertRequiredNumbersFile(args.file)
+    const exportDir = exportNumbers(numbersFile)
+
+    try {
+        await runImport(args, exportDir)
+    } finally {
+        rmSync(exportDir, {force: true, recursive: true})
+    }
 }
 
 await main()
