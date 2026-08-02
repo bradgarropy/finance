@@ -456,17 +456,9 @@ const parseBalances = (rows: CsvRow[]) => {
 
     for (const row of rows) {
         const date = normalizeDate(row.Date ?? "")
-        const nfcuCents = parseMoney(row.NFCU ?? "")
-        const appleCents = parseMoney(row.Apple ?? "")
-        const checkingCents = parseRequiredMoney(row.Checking ?? "", "Checking")
-        const transformedCheckingCents =
-            checkingCents + (nfcuCents ?? 0) + (appleCents ?? 0)
 
         for (const account of accountInputs) {
-            const amountCents =
-                account.name === "Checking"
-                    ? transformedCheckingCents
-                    : parseMoney(row[account.name] ?? "")
+            const amountCents = parseMoney(row[account.name] ?? "")
 
             if (account.category === "credit" && amountCents === null) {
                 continue
@@ -659,14 +651,6 @@ const validateOverview = (
             balances,
             balance => balance.accountType === "asset",
         )
-        const credit = sumBalances(
-            balances,
-            balance => balance.accountCategory === "credit",
-        )
-        const mortgage = sumBalances(
-            balances,
-            balance => balance.accountCategory === "mortgage",
-        )
         const liabilities = sumBalances(
             balances,
             balance => balance.accountType === "liability",
@@ -675,13 +659,13 @@ const validateOverview = (
         assertCentsEqual(
             "Overview assets",
             date,
-            assets - credit,
+            assets,
             parseRequiredMoney(row.Assets ?? "", "overview assets"),
         )
         assertCentsEqual(
             "Overview debt",
             date,
-            mortgage,
+            liabilities,
             parseRequiredMoney(row.Debt ?? "", "overview debt"),
         )
         assertCentsEqual(
@@ -745,9 +729,9 @@ const validateSaving = (
         const nfcu = getAccountBalance(balances, "NFCU")
         const apple = getAccountBalance(balances, "Apple")
         const checking = getAccountBalance(balances, "Checking")
-        const postPayoffChecking = checking - nfcu - apple
+        const availableChecking = checking - nfcu - apple
         const saved = Math.max(
-            postPayoffChecking - settings.checkingBaselineCents,
+            availableChecking - settings.checkingBaselineCents,
             0,
         )
         const investmentsSaved = Math.round(
@@ -764,7 +748,7 @@ const validateSaving = (
         assertCentsEqual(
             "Saving checking",
             date,
-            postPayoffChecking,
+            checking,
             parseRequiredMoney(row.Checking ?? "", "saving checking"),
         )
         assertOptionalCentsEqual(

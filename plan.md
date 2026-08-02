@@ -27,10 +27,11 @@ D1 via Drizzle ORM. Full history is imported from the spreadsheet.
   snapshot BEFORE any money is moved (checking still holds the amount that will
   pay the cards); the app then recommends card payments + savings transfers.
   Net worth = SUM(assets) - SUM(liabilities) with credit INCLUDED as a liability
-  (no exclusion rule). Requires: import backfills historical checking to
-  pre-payoff (+ card totals), and the Savings calc uses available (post-payoff)
-  checking = checking - outstanding credit.
-- History + Constants imported from CSV exports kept OUTSIDE the public repo.
+  (no exclusion rule). The spreadsheet uses the same convention, and the
+  Savings calc uses available (post-payoff) checking = checking - outstanding
+  credit.
+- History + Constants are imported from the Numbers document kept outside the
+  public repo; temporary CSV exports are deleted after each import.
 - UI stack: Base UI primitives + Tailwind styling. Use plain Tailwind for
   simple layout and reach for Base UI as interactive primitives appear.
 - Charts: Recharts (client-rendered), with small local chart wrappers as needed.
@@ -139,8 +140,8 @@ introduced, restore the in-Worker JWT verification so it fails closed.
   exports:
     - Overview: assets, debt, and worth.
     - Spending: NFCU, Apple, and total spend.
-    - Saving: spent, post-payoff checking, total saved, investments saved, and
-      savings saved where those fields are populated.
+    - Saving: spent, captured pre-payoff checking, total saved after card payoff,
+      investments saved, and savings saved where those fields are populated.
     - Saving ratio: Investments/Savings split matches imported settings.
 - Local D1 import is the default write target:
 
@@ -167,10 +168,8 @@ introduced, restore the in-Worker JWT verification so it fails closed.
         - Emergency baseline: Constants `Savings` row.
         - Defaults not present in Constants: `excessInvestPct = 75`,
           `excessSavePct = 25`, `defaultWindow = 52`.
-    - Pre-payoff backfill: each historical checking balance is transformed as
-      `checking + NFCU + Apple` because the spreadsheet recorded checking after
-      card payoff, while the app stores the pre-payoff snapshot. Blank card
-      cells count as zero for this transform.
+    - Balances are imported directly from the spreadsheet, which stores the same
+      pre-payoff snapshots as the app.
     - Blank NFCU/Apple cells are skipped as balance rows. Explicit `$0.00`
       credit card cells are imported as zero rows.
 - Idempotency:
