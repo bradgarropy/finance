@@ -40,6 +40,7 @@ const DateInput = ({
             <PopoverContent align="end" className="w-auto p-0">
                 <Calendar
                     required
+                    defaultMonth={parseISO(value)}
                     mode="single"
                     selected={parseISO(value)}
                     onSelect={selectedDate => {
