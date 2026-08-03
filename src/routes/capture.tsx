@@ -45,7 +45,7 @@ export const action = async ({context, request}: Route.ActionArgs) => {
         result.data.balances,
     )
 
-    return redirect("/")
+    return redirect(`/capture/${result.data.date}`)
 }
 
 export const loader = async ({context}: Route.LoaderArgs) => {

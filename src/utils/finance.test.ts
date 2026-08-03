@@ -1,6 +1,10 @@
 import {expect, test} from "vitest"
 
-import {calculateSnapshot, calculateSnapshotSeries} from "~/utils/finance"
+import {
+    calculateCaptureSummary,
+    calculateSnapshot,
+    calculateSnapshotSeries,
+} from "~/utils/finance"
 
 test("calculates assets, liabilities, and net worth from positive balances", () => {
     const snapshot = calculateSnapshot("2026-07-31", [
@@ -60,4 +64,87 @@ test("groups balances into a chronological snapshot series", () => {
             netWorthCents: 70_000,
         },
     ])
+})
+
+test("calculates a capture summary and savings plan", () => {
+    const summary = calculateCaptureSummary(
+        [
+            {
+                accountCategory: "cash",
+                accountName: "Checking",
+                accountType: "asset",
+                amountCents: 2_500_000,
+            },
+            {
+                accountCategory: "savings",
+                accountName: "Savings",
+                accountType: "asset",
+                amountCents: 1_000_000,
+            },
+            {
+                accountCategory: "credit",
+                accountName: "NFCU",
+                accountType: "liability",
+                amountCents: 100_000,
+            },
+            {
+                accountCategory: "credit",
+                accountName: "Apple",
+                accountType: "liability",
+                amountCents: 50_000,
+            },
+            {
+                accountCategory: "mortgage",
+                accountName: "Mortgage",
+                accountType: "liability",
+                amountCents: 10_000_000,
+            },
+        ],
+        {
+            checkingBaselineCents: 2_000_000,
+            excessInvestPct: 75,
+            excessSavePct: 25,
+        },
+    )
+
+    expect(summary).toEqual({
+        assetsCents: 3_500_000,
+        availableCheckingCents: 2_350_000,
+        checkingCents: 2_500_000,
+        investmentsSavedCents: 262_500,
+        liabilitiesCents: 10_150_000,
+        netWorthCents: -6_650_000,
+        savingsSavedCents: 87_500,
+        spendingCents: 150_000,
+        totalSavedCents: 350_000,
+    })
+})
+
+test("does not recommend saving below the checking baseline", () => {
+    const summary = calculateCaptureSummary(
+        [
+            {
+                accountCategory: "cash",
+                accountName: "Checking",
+                accountType: "asset",
+                amountCents: 2_050_000,
+            },
+            {
+                accountCategory: "credit",
+                accountName: "NFCU",
+                accountType: "liability",
+                amountCents: 100_000,
+            },
+        ],
+        {
+            checkingBaselineCents: 2_000_000,
+            excessInvestPct: 75,
+            excessSavePct: 25,
+        },
+    )
+
+    expect(summary.availableCheckingCents).toEqual(1_950_000)
+    expect(summary.totalSavedCents).toEqual(0)
+    expect(summary.investmentsSavedCents).toEqual(0)
+    expect(summary.savingsSavedCents).toEqual(0)
 })
