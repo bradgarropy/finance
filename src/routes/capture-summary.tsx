@@ -41,14 +41,12 @@ export const loader = async ({context, params}: Route.LoaderArgs) => {
         date: dateResult.data,
         nextDate: captureDates[captureIndex + 1]?.date ?? null,
         previousDate: captureDates[captureIndex - 1]?.date ?? null,
-        settings,
         summary: calculateCaptureSummary(balances, settings),
     }
 }
 
 const Route = ({loaderData}: Route.ComponentProps) => {
-    const {balances, date, nextDate, previousDate, settings, summary} =
-        loaderData
+    const {balances, date, nextDate, previousDate, summary} = loaderData
     const assetBalances = balances.filter(
         balance => balance.accountType === "asset",
     )

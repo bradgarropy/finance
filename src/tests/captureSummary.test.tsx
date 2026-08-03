@@ -64,14 +64,6 @@ const renderRoute = () => {
                 date: "2026-07-27",
                 nextDate: "2026-08-03",
                 previousDate: "2026-07-20",
-                settings: {
-                    checkingBaselineCents: 2_000_000,
-                    defaultWindow: 52,
-                    emergencyBaselineCents: 6_000_000,
-                    excessInvestPct: 75,
-                    excessSavePct: 25,
-                    id: 1,
-                },
                 summary: {
                     assetsCents: 3_500_000,
                     availableCheckingCents: 2_400_000,
