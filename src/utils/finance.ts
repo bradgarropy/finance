@@ -1,4 +1,4 @@
-import type {Account, Balance} from "~/db/queries"
+import type {Account, Balance, Settings} from "~/db/queries"
 
 type BalanceSnapshotInput = Pick<Balance, "amountCents" | "date"> & {
     accountType: Account["type"]
@@ -9,6 +9,29 @@ export type FinanceSnapshot = {
     date: string
     liabilitiesCents: number
     netWorthCents: number
+}
+
+type CaptureBalanceInput = Pick<Balance, "amountCents"> & {
+    accountCategory: Account["category"]
+    accountName: Account["name"]
+    accountType: Account["type"]
+}
+
+type CaptureSettingsInput = Pick<
+    Settings,
+    "checkingBaselineCents" | "excessInvestPct" | "excessSavePct"
+>
+
+export type CaptureSummary = {
+    assetsCents: number
+    availableCheckingCents: number
+    checkingCents: number
+    investmentsSavedCents: number
+    liabilitiesCents: number
+    netWorthCents: number
+    savingsSavedCents: number
+    spendingCents: number
+    totalSavedCents: number
 }
 
 export const calculateSnapshot = (
@@ -43,4 +66,43 @@ export const calculateSnapshotSeries = (
     return [...balancesByDate.entries()]
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([date, datedBalances]) => calculateSnapshot(date, datedBalances))
+}
+
+export const calculateCaptureSummary = (
+    balances: CaptureBalanceInput[],
+    settings: CaptureSettingsInput,
+): CaptureSummary => {
+    const snapshot = calculateSnapshot(
+        "",
+        balances.map(balance => ({...balance, date: ""})),
+    )
+    const checkingCents =
+        balances.find(balance => balance.accountName === "Checking")
+            ?.amountCents ?? 0
+    const spendingCents = balances
+        .filter(balance => balance.accountCategory === "credit")
+        .reduce((total, balance) => total + balance.amountCents, 0)
+    const availableCheckingCents = checkingCents - spendingCents
+    const totalSavedCents = Math.max(
+        availableCheckingCents - settings.checkingBaselineCents,
+        0,
+    )
+    const investmentsSavedCents = Math.round(
+        (totalSavedCents * settings.excessInvestPct) / 100,
+    )
+    const savingsSavedCents = Math.round(
+        (totalSavedCents * settings.excessSavePct) / 100,
+    )
+
+    return {
+        assetsCents: snapshot.assetsCents,
+        availableCheckingCents,
+        checkingCents,
+        investmentsSavedCents,
+        liabilitiesCents: snapshot.liabilitiesCents,
+        netWorthCents: snapshot.netWorthCents,
+        savingsSavedCents,
+        spendingCents,
+        totalSavedCents,
+    }
 }
