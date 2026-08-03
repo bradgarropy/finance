@@ -1,11 +1,11 @@
-import {PlusIcon} from "lucide-react"
+import {ChevronLeftIcon, ChevronRightIcon, PlusIcon} from "lucide-react"
 import {data, Link} from "react-router"
 import {z} from "zod"
 
 import {Badge} from "~/components/ui/badge"
 import {buttonVariants} from "~/components/ui/button"
 import {getDatabase} from "~/db/client"
-import {getBalancesByDate, getSettings} from "~/db/queries"
+import {getBalancesByDate, getCaptureDates, getSettings} from "~/db/queries"
 import {calculateCaptureSummary} from "~/utils/finance"
 import {formatDate, formatMoney} from "~/utils/format"
 
@@ -19,8 +19,9 @@ export const loader = async ({context, params}: Route.LoaderArgs) => {
     }
 
     const db = getDatabase(context.cloudflare.env)
-    const [balances, settings] = await Promise.all([
+    const [balances, captureDates, settings] = await Promise.all([
         getBalancesByDate(db, dateResult.data),
+        getCaptureDates(db),
         getSettings(db),
     ])
 
@@ -32,16 +33,23 @@ export const loader = async ({context, params}: Route.LoaderArgs) => {
         throw data("Settings are not configured.", {status: 500})
     }
 
+    const captureIndex = captureDates.findIndex(
+        capture => capture.date === dateResult.data,
+    )
+
     return {
         balances,
         date: dateResult.data,
+        nextDate: captureDates[captureIndex + 1]?.date ?? null,
+        previousDate: captureDates[captureIndex - 1]?.date ?? null,
         settings,
         summary: calculateCaptureSummary(balances, settings),
     }
 }
 
 const Route = ({loaderData}: Route.ComponentProps) => {
-    const {balances, date, settings, summary} = loaderData
+    const {balances, date, nextDate, previousDate, settings, summary} =
+        loaderData
     const assetBalances = balances.filter(
         balance => balance.accountType === "asset",
     )
@@ -73,9 +81,46 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                 <header className="mb-10 flex flex-col items-start justify-between gap-6 sm:flex-row">
                     <div className="space-y-2">
                         <h1 className="text-3xl font-bold">Capture summary</h1>
-                        <p className="text-muted-foreground">
-                            {formatDate(date)}
-                        </p>
+                        <nav
+                            aria-label="Capture navigation"
+                            className="flex items-center gap-1"
+                        >
+                            {previousDate ? (
+                                <Link
+                                    aria-label={`Previous capture: ${formatDate(previousDate)}`}
+                                    className={buttonVariants({
+                                        size: "icon-sm",
+                                        variant: "ghost",
+                                    })}
+                                    title={`Previous capture: ${formatDate(previousDate)}`}
+                                    to={`/capture/${previousDate}`}
+                                >
+                                    <ChevronLeftIcon />
+                                </Link>
+                            ) : (
+                                <span aria-hidden className="size-7" />
+                            )}
+
+                            <p className="min-w-32 text-center text-muted-foreground">
+                                {formatDate(date)}
+                            </p>
+
+                            {nextDate ? (
+                                <Link
+                                    aria-label={`Next capture: ${formatDate(nextDate)}`}
+                                    className={buttonVariants({
+                                        size: "icon-sm",
+                                        variant: "ghost",
+                                    })}
+                                    title={`Next capture: ${formatDate(nextDate)}`}
+                                    to={`/capture/${nextDate}`}
+                                >
+                                    <ChevronRightIcon />
+                                </Link>
+                            ) : (
+                                <span aria-hidden className="size-7" />
+                            )}
+                        </nav>
                     </div>
 
                     <Link className={buttonVariants()} to="/capture">

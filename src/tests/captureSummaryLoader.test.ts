@@ -1,16 +1,20 @@
 import {beforeEach, expect, test, vi} from "vitest"
 
-const {database, getBalancesByDate, getDatabase, getSettings} = vi.hoisted(
-    () => ({
+const {database, getBalancesByDate, getCaptureDates, getDatabase, getSettings} =
+    vi.hoisted(() => ({
         database: {},
         getBalancesByDate: vi.fn(),
+        getCaptureDates: vi.fn(),
         getDatabase: vi.fn(),
         getSettings: vi.fn(),
-    }),
-)
+    }))
 
 vi.mock("~/db/client", () => ({getDatabase}))
-vi.mock("~/db/queries", () => ({getBalancesByDate, getSettings}))
+vi.mock("~/db/queries", () => ({
+    getBalancesByDate,
+    getCaptureDates,
+    getSettings,
+}))
 
 import {loader} from "~/routes/capture-summary"
 
@@ -50,6 +54,11 @@ beforeEach(() => {
     vi.clearAllMocks()
     getDatabase.mockReturnValue(database)
     getBalancesByDate.mockResolvedValue(balances)
+    getCaptureDates.mockResolvedValue([
+        {date: "2026-07-20"},
+        {date: "2026-07-27"},
+        {date: "2026-08-03"},
+    ])
     getSettings.mockResolvedValue(settings)
 })
 
@@ -62,10 +71,13 @@ test("loads a capture and derives its financial summary", async () => {
 
     expect(getDatabase).toHaveBeenCalledOnce()
     expect(getBalancesByDate).toHaveBeenCalledWith(database, "2026-07-27")
+    expect(getCaptureDates).toHaveBeenCalledWith(database)
     expect(getSettings).toHaveBeenCalledWith(database)
     expect(result).toEqual({
         balances,
         date: "2026-07-27",
+        nextDate: "2026-08-03",
+        previousDate: "2026-07-20",
         settings,
         summary: {
             assetsCents: 2_500_000,

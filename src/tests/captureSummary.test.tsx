@@ -62,6 +62,8 @@ const renderRoute = () => {
                     },
                 ],
                 date: "2026-07-27",
+                nextDate: "2026-08-03",
+                previousDate: "2026-07-20",
                 settings: {
                     checkingBaselineCents: 2_000_000,
                     defaultWindow: 52,
@@ -105,6 +107,14 @@ test("renders the captured balances, spending, and savings summary", async () =>
         "href",
         "/capture",
     )
+    expect(
+        screen.getByRole("link", {
+            name: "Previous capture: July 20, 2026",
+        }),
+    ).toHaveAttribute("href", "/capture/2026-07-20")
+    expect(
+        screen.getByRole("link", {name: "Next capture: August 3, 2026"}),
+    ).toHaveAttribute("href", "/capture/2026-08-03")
 
     const totals = screen.getByRole("region", {
         name: "Financial snapshot totals",

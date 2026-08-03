@@ -96,6 +96,13 @@ export const getBalancesByDate = (db: Database, date: string) => {
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
 }
 
+export const getCaptureDates = (db: Database) => {
+    return db
+        .selectDistinct({date: balances.date})
+        .from(balances)
+        .orderBy(asc(balances.date))
+}
+
 export const getLatestBalances = async (db: Database) => {
     const rows = await db
         .select({date: balances.date})
