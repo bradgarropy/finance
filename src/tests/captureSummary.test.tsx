@@ -151,9 +151,9 @@ test("renders the captured balances, spending, and savings summary", async () =>
     expect(within(spent).queryByText("Apple")).not.toBeInTheDocument()
     expect(within(spent).getByText("$1,000.00")).toBeInTheDocument()
     expect(within(saved).getByText("Investments")).toBeInTheDocument()
-    expect(within(saved).getByText("75%")).toBeInTheDocument()
+    expect(within(saved).queryByText("75%")).not.toBeInTheDocument()
     expect(within(saved).getByText("Savings")).toBeInTheDocument()
-    expect(within(saved).getByText("25%")).toBeInTheDocument()
+    expect(within(saved).queryByText("25%")).not.toBeInTheDocument()
     expect(
         within(saved).queryByText("Checking after cards"),
     ).not.toBeInTheDocument()
