@@ -40,7 +40,7 @@ beforeEach(() => {
     upsertBalances.mockReset()
 })
 
-test("upserts a valid balance snapshot and redirects to its summary", async () => {
+test("upserts a valid balance snapshot for the remaining capture flow", async () => {
     const balances = [
         {accountId: 1, amountCents: 123_456},
         {accountId: 2, amountCents: 0},
@@ -54,11 +54,7 @@ test("upserts a valid balance snapshot and redirects to its summary", async () =
         "2026-07-27",
         balances,
     )
-    expect(response).toBeInstanceOf(Response)
-    expect(response).toHaveProperty("status", 302)
-    expect((response as Response).headers.get("Location")).toEqual(
-        "/capture/2026-07-27",
-    )
+    expect(response).toEqual({date: "2026-07-27", error: null})
 })
 
 describe.each([

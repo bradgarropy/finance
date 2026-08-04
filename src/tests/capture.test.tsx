@@ -5,6 +5,7 @@ import {expect, test} from "vitest"
 
 import type {Account} from "~/db/queries"
 import Route from "~/routes/capture"
+import {formatDateInput} from "~/utils/format"
 
 type CaptureAccount = Pick<Account, "category" | "id" | "name" | "type"> & {
     defaultAmountCents: number | null
@@ -30,9 +31,28 @@ const accounts: CaptureAccount[] = [
 const renderRoute = (routeAccounts: CaptureAccount[] = accounts) => {
     const Stub = createRoutesStub([
         {
+            action: async ({request}) => {
+                const formData = await request.formData()
+
+                return {date: String(formData.get("date")), error: null}
+            },
             Component: Route,
-            loader: () => ({accounts: routeAccounts}),
+            loader: () => ({
+                accounts: routeAccounts,
+                settings: {
+                    checkingBaselineCents: 100_000,
+                    defaultWindow: 52 as const,
+                    emergencyBaselineCents: 6_000_000,
+                    excessInvestPct: 75,
+                    excessSavePct: 25,
+                    id: 1,
+                },
+            }),
             path: "/capture",
+        },
+        {
+            Component: () => null,
+            path: "/capture/:date",
         },
     ])
 
@@ -49,10 +69,10 @@ test("renders the date step", async () => {
         }),
     ).toBeInTheDocument()
     expect(document.title).toEqual("💵 finance | capture")
-    expect(screen.getByText("1 of 3")).toBeInTheDocument()
+    expect(screen.getByText("1 of 7")).toBeInTheDocument()
     expect(screen.getByRole("progressbar")).toHaveAttribute(
         "aria-valuetext",
-        "Step 1 of 3",
+        "Step 1 of 7",
     )
     expect(screen.getByText("Balance date")).toHaveClass("text-right")
     const datePicker = screen.getByLabelText("Balance date")
@@ -82,7 +102,7 @@ test("walks through accounts and preserves their balances", async () => {
     expect(screen.getByText("Checking")).toBeInTheDocument()
     expect(screen.getByText("cash")).toBeInTheDocument()
     expect(screen.getByText("asset")).toBeInTheDocument()
-    expect(screen.getByText("2 of 3")).toBeInTheDocument()
+    expect(screen.getByText("2 of 7")).toBeInTheDocument()
 
     const checkingInput = screen.getByLabelText("Current balance")
     const nextButton = screen.getByRole("button", {name: "Next account"})
@@ -97,18 +117,20 @@ test("walks through accounts and preserves their balances", async () => {
     expect(screen.getByText("Apple")).toBeInTheDocument()
     expect(screen.getByText("credit")).toBeInTheDocument()
     expect(screen.getByText("liability")).toBeInTheDocument()
-    expect(screen.getByText("3 of 3")).toBeInTheDocument()
+    expect(screen.getByText("3 of 7")).toBeInTheDocument()
     expect(screen.getByLabelText("Current balance")).toHaveValue("")
-    const reviewButton = screen.getByRole("button", {name: "Review balances"})
+    const confirmButton = screen.getByRole("button", {
+        name: "Confirm balances",
+    })
 
-    expect(reviewButton).toBeDisabled()
+    expect(confirmButton).toBeDisabled()
 
     await user.type(screen.getByLabelText("Current balance"), "42")
-    expect(reviewButton).toBeEnabled()
-    await user.click(reviewButton)
+    expect(confirmButton).toBeEnabled()
+    await user.click(confirmButton)
 
     expect(
-        screen.getByRole("heading", {name: "Review balances"}),
+        screen.getByRole("heading", {name: "Confirm balances"}),
     ).toBeInTheDocument()
     expect(screen.getByRole("heading", {name: "Assets"})).toBeInTheDocument()
     expect(
@@ -116,8 +138,10 @@ test("walks through accounts and preserves their balances", async () => {
     ).toBeInTheDocument()
     expect(screen.getByText("$1,300.00")).toBeInTheDocument()
     expect(screen.getByText("$42.00")).toBeInTheDocument()
-    expect(screen.getByText("3 of 3")).toBeInTheDocument()
-    expect(screen.getByRole("button", {name: "Save snapshot"})).toBeEnabled()
+    expect(screen.getByText("4 of 7")).toBeInTheDocument()
+    expect(
+        screen.getByRole("button", {name: "Confirm and continue"}),
+    ).toBeEnabled()
 
     await user.click(screen.getByRole("button", {name: "Back"}))
 
@@ -127,6 +151,78 @@ test("walks through accounts and preserves their balances", async () => {
 
     expect(screen.getByText("Checking")).toBeInTheDocument()
     expect(screen.getByLabelText("Current balance")).toHaveValue("1,300.00")
+})
+
+test("continues from saved balances through the weekly workflow", async () => {
+    const user = userEvent.setup()
+    const expectedDate = formatDateInput(new Date())
+    renderRoute()
+
+    await user.click(await screen.findByRole("button", {name: "Begin capture"}))
+    await user.type(screen.getByLabelText("Current balance"), "1300")
+    await user.click(screen.getByRole("button", {name: "Next account"}))
+    await user.type(screen.getByLabelText("Current balance"), "42")
+    await user.click(screen.getByRole("button", {name: "Confirm balances"}))
+    await user.click(screen.getByRole("button", {name: "Confirm and continue"}))
+
+    expect(
+        await screen.findByRole("heading", {
+            name: "Pay off your credit cards",
+        }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("5 of 7")).toBeInTheDocument()
+
+    const continueButton = screen.getByRole("button", {name: "Continue"})
+
+    expect(continueButton).toBeDisabled()
+    await user.click(screen.getByRole("checkbox", {name: /Apple/}))
+    expect(continueButton).toBeEnabled()
+    await user.click(continueButton)
+
+    expect(
+        screen.getByRole("heading", {name: "Move your excess cash"}),
+    ).toBeInTheDocument()
+    expect(screen.getByText("6 of 7")).toBeInTheDocument()
+    expect(screen.getByText("$193.50")).toBeInTheDocument()
+    expect(screen.getByText("$64.50")).toBeInTheDocument()
+
+    const finishButton = screen.getByRole("button", {name: "Finish"})
+
+    expect(finishButton).toBeDisabled()
+    await user.click(screen.getByRole("checkbox", {name: /Investments/}))
+    await user.click(screen.getByRole("checkbox", {name: /Savings/}))
+    expect(finishButton).toBeEnabled()
+    await user.click(finishButton)
+
+    expect(
+        screen.getByRole("heading", {name: "Weekly finances complete"}),
+    ).toBeInTheDocument()
+    expect(screen.getByText("7 of 7")).toBeInTheDocument()
+    expect(screen.queryByText("Cards paid")).not.toBeInTheDocument()
+    expect(
+        screen.getByRole("link", {name: "View capture summary"}),
+    ).toHaveAttribute("href", `/capture/${expectedDate}`)
+})
+
+test("does not create a payoff task for a zero credit balance", async () => {
+    const user = userEvent.setup()
+    renderRoute()
+
+    await user.click(await screen.findByRole("button", {name: "Begin capture"}))
+    await user.type(screen.getByLabelText("Current balance"), "1000")
+    await user.click(screen.getByRole("button", {name: "Next account"}))
+    await user.type(screen.getByLabelText("Current balance"), "0")
+    await user.click(screen.getByRole("button", {name: "Confirm balances"}))
+    await user.click(screen.getByRole("button", {name: "Confirm and continue"}))
+
+    expect(
+        await screen.findByRole("heading", {
+            name: "Pay off your credit cards",
+        }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Apple")).not.toBeInTheDocument()
+    expect(screen.getByText("No card payments this week.")).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: "Continue"})).toBeEnabled()
 })
 
 test("carries the Emergency and mortgage balances forward", async () => {

@@ -78,7 +78,6 @@ test("loads a capture and derives its financial summary", async () => {
         date: "2026-07-27",
         nextDate: "2026-08-03",
         previousDate: "2026-07-20",
-        settings,
         summary: {
             assetsCents: 2_500_000,
             availableCheckingCents: 2_400_000,

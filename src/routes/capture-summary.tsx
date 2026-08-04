@@ -2,7 +2,6 @@ import {ChevronLeftIcon, ChevronRightIcon, PlusIcon} from "lucide-react"
 import {data, Link} from "react-router"
 import {z} from "zod"
 
-import {Badge} from "~/components/ui/badge"
 import {buttonVariants} from "~/components/ui/button"
 import {getDatabase} from "~/db/client"
 import {getBalancesByDate, getCaptureDates, getSettings} from "~/db/queries"
@@ -42,14 +41,12 @@ export const loader = async ({context, params}: Route.LoaderArgs) => {
         date: dateResult.data,
         nextDate: captureDates[captureIndex + 1]?.date ?? null,
         previousDate: captureDates[captureIndex - 1]?.date ?? null,
-        settings,
         summary: calculateCaptureSummary(balances, settings),
     }
 }
 
 const Route = ({loaderData}: Route.ComponentProps) => {
-    const {balances, date, nextDate, previousDate, settings, summary} =
-        loaderData
+    const {balances, date, nextDate, previousDate, summary} = loaderData
     const assetBalances = balances.filter(
         balance => balance.accountType === "asset",
     )
@@ -255,30 +252,14 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
                         <div className="divide-y border-y">
                             <div className="flex items-center justify-between gap-6 py-3">
-                                <span className="flex items-center gap-2 font-medium">
-                                    Investments
-                                    <Badge
-                                        className="tabular-nums"
-                                        variant="secondary"
-                                    >
-                                        {settings.excessInvestPct}%
-                                    </Badge>
-                                </span>
+                                <span className="font-medium">Investments</span>
                                 <span className="tabular-nums">
                                     {formatMoney(summary.investmentsSavedCents)}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-6 py-3">
-                                <span className="flex items-center gap-2 font-medium">
-                                    Savings
-                                    <Badge
-                                        className="tabular-nums"
-                                        variant="secondary"
-                                    >
-                                        {settings.excessSavePct}%
-                                    </Badge>
-                                </span>
+                                <span className="font-medium">Savings</span>
                                 <span className="tabular-nums">
                                     {formatMoney(summary.savingsSavedCents)}
                                 </span>
