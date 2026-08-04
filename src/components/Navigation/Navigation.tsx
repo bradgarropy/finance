@@ -14,6 +14,10 @@ const Navigation = () => {
             <NavLink to="/capture" prefetch="intent">
                 Capture
             </NavLink>
+
+            <NavLink to="/settings" prefetch="intent">
+                Settings
+            </NavLink>
         </nav>
     )
 }

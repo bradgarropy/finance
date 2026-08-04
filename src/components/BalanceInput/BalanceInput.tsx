@@ -1,13 +1,8 @@
 import {Field as FieldPrimitive} from "@base-ui/react/field"
-import {NumberField} from "@base-ui/react/number-field"
 
+import MoneyInput from "~/components/MoneyInput"
 import {Badge} from "~/components/ui/badge"
 import {Field, FieldError, FieldLabel} from "~/components/ui/field"
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupText,
-} from "~/components/ui/input-group"
 import type {Account} from "~/db/queries"
 
 type BalanceAccount = Pick<Account, "category" | "id" | "name" | "type">
@@ -44,43 +39,22 @@ const BalanceInput = ({account, onValueChange, value}: BalanceInputProps) => {
             </div>
 
             <FieldPrimitive.Root name={inputId} render={<Field />}>
-                <NumberField.Root
-                    required
-                    format={{
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                        style: "decimal",
-                    }}
-                    min={0}
-                    step={0.01}
+                <MoneyInput
+                    id={inputId}
                     value={value}
                     onValueChange={onValueChange}
-                >
-                    <FieldPrimitive.Label
-                        render={
-                            <FieldLabel
-                                htmlFor={inputId}
-                                className="ml-auto text-right"
-                            />
-                        }
-                    >
-                        Current balance
-                    </FieldPrimitive.Label>
+                />
 
-                    <NumberField.Group render={<InputGroup className="h-14" />}>
-                        <NumberField.Input
-                            id={inputId}
-                            data-slot="input-group-control"
-                            className="h-full min-w-0 flex-1 bg-transparent px-4 text-right text-lg tabular-nums outline-none"
+                <FieldPrimitive.Label
+                    render={
+                        <FieldLabel
+                            htmlFor={inputId}
+                            className="order-first ml-auto text-right"
                         />
-
-                        <InputGroupAddon>
-                            <InputGroupText className="text-lg">
-                                $
-                            </InputGroupText>
-                        </InputGroupAddon>
-                    </NumberField.Group>
-                </NumberField.Root>
+                    }
+                >
+                    Current balance
+                </FieldPrimitive.Label>
 
                 <FieldPrimitive.Error render={<FieldError />}>
                     Enter a balance.
