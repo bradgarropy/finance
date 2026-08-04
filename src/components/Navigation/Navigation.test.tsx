@@ -15,5 +15,6 @@ test("renders", () => {
         "Overview",
         "Accounts",
         "Capture",
+        "Settings",
     ])
 })

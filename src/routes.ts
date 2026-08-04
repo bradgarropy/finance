@@ -7,6 +7,7 @@ const routes: RouteConfig = [
     route("account/:accountId", "./routes/account-summary.tsx"),
     route("capture", "./routes/capture.tsx"),
     route("capture/:date", "./routes/capture-summary.tsx"),
+    route("settings", "./routes/settings.tsx"),
     route("api/hello", "./routes/api/hello.tsx"),
 ]
 
