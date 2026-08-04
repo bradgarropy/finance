@@ -5,6 +5,7 @@ import {
     PencilIcon,
     Trash2Icon,
 } from "lucide-react"
+import {Link} from "react-router"
 
 import {AccountTypeBadge} from "~/components/AccountTypeBadge"
 import {Badge} from "~/components/ui/badge"
@@ -79,7 +80,12 @@ const AccountList = ({
                         {accounts.map(account => (
                             <TableRow key={account.id}>
                                 <TableCell className="font-medium">
-                                    {account.name}
+                                    <Link
+                                        className="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                                        to={`/account/${account.id}`}
+                                    >
+                                        {account.name}
+                                    </Link>
                                 </TableCell>
                                 <TableCell>
                                     <AccountTypeBadge type={account.type} />

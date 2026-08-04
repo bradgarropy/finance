@@ -57,6 +57,12 @@ const Route = ({loaderData}: Route.ComponentProps) => {
         balance =>
             balance.accountCategory === "credit" && balance.amountCents > 0,
     )
+    const investmentAccount = balances.find(
+        balance => balance.accountName === "Investment",
+    )
+    const savingsAccount = balances.find(
+        balance => balance.accountName === "Savings",
+    )
     const balanceGroups = [
         {
             balances: assetBalances,
@@ -177,9 +183,12 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                             key={balance.id}
                                             className="flex items-center justify-between gap-6 py-3"
                                         >
-                                            <span className="font-medium">
+                                            <Link
+                                                className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                                                to={`/account/${balance.accountId}`}
+                                            >
                                                 {balance.accountName}
-                                            </span>
+                                            </Link>
                                             <span className="tabular-nums">
                                                 {formatMoney(
                                                     balance.amountCents,
@@ -231,9 +240,12 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                     key={balance.id}
                                     className="flex items-center justify-between gap-6 py-3"
                                 >
-                                    <span className="font-medium">
+                                    <Link
+                                        className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                                        to={`/account/${balance.accountId}`}
+                                    >
                                         {balance.accountName}
-                                    </span>
+                                    </Link>
                                     <span className="tabular-nums">
                                         {formatMoney(balance.amountCents)}
                                     </span>
@@ -252,14 +264,34 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
                         <div className="divide-y border-y">
                             <div className="flex items-center justify-between gap-6 py-3">
-                                <span className="font-medium">Investments</span>
+                                {investmentAccount ? (
+                                    <Link
+                                        className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                                        to={`/account/${investmentAccount.accountId}`}
+                                    >
+                                        Investments
+                                    </Link>
+                                ) : (
+                                    <span className="font-medium">
+                                        Investments
+                                    </span>
+                                )}
                                 <span className="tabular-nums">
                                     {formatMoney(summary.investmentsSavedCents)}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-6 py-3">
-                                <span className="font-medium">Savings</span>
+                                {savingsAccount ? (
+                                    <Link
+                                        className="font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                                        to={`/account/${savingsAccount.accountId}`}
+                                    >
+                                        Savings
+                                    </Link>
+                                ) : (
+                                    <span className="font-medium">Savings</span>
+                                )}
                                 <span className="tabular-nums">
                                     {formatMoney(summary.savingsSavedCents)}
                                 </span>

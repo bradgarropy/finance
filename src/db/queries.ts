@@ -32,6 +32,16 @@ export const getAccounts = (db: Database) => {
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
 }
 
+export const getAccount = async (db: Database, id: number) => {
+    const rows = await db
+        .select()
+        .from(accounts)
+        .where(eq(accounts.id, id))
+        .limit(1)
+
+    return rows[0] ?? null
+}
+
 export const createAccount = async (
     db: Database,
     input: AccountDetailsInput,
@@ -94,6 +104,14 @@ export const getBalancesByDate = (db: Database, date: string) => {
         .innerJoin(accounts, eq(balances.accountId, accounts.id))
         .where(eq(balances.date, date))
         .orderBy(asc(accounts.sortOrder), asc(accounts.name))
+}
+
+export const getBalancesByAccountId = (db: Database, accountId: number) => {
+    return db
+        .select()
+        .from(balances)
+        .where(eq(balances.accountId, accountId))
+        .orderBy(desc(balances.date))
 }
 
 export const getCaptureDates = (db: Database) => {
