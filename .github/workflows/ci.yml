@@ -88,6 +88,8 @@ jobs:
               run: npx playwright install --with-deps
             - name: "🗄️ database"
               run: npm run db:migrate
+            - name: "🌱 seed"
+              run: npm run db:seed
             - name: "🛠️ build"
               run: npm run build
             - name: "🎭 e2e"
