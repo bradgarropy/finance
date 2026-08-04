@@ -23,6 +23,18 @@ export const formatMoney = (amountCents: number) => {
     return moneyFormatter.format(amountCents / 100)
 }
 
+export const formatMoneyParts = (amountCents: number) => {
+    const parts = moneyFormatter.formatToParts(amountCents / 100)
+
+    return {
+        amount: parts
+            .filter(part => part.type !== "currency")
+            .map(part => part.value)
+            .join(""),
+        currency: parts.find(part => part.type === "currency")?.value ?? "",
+    }
+}
+
 export const formatDate = (date: string) => {
     return dateFormatter.format(new Date(`${date}T00:00:00.000Z`))
 }

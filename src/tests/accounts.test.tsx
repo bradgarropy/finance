@@ -49,8 +49,14 @@ test("lists active and archived accounts", async () => {
     const archived = screen.getByRole("region", {name: "Archived"})
 
     expect(within(active).getByText("Checking")).toBeInTheDocument()
+    expect(
+        within(active).getByRole("link", {name: "Checking"}),
+    ).toHaveAttribute("href", "/account/1")
     expect(within(active).queryByText("Old Card")).not.toBeInTheDocument()
     expect(within(archived).getByText("Old Card")).toBeInTheDocument()
+    expect(
+        within(archived).getByRole("link", {name: "Old Card"}),
+    ).toHaveAttribute("href", "/account/2")
     expect(within(archived).queryByText("Checking")).not.toBeInTheDocument()
 })
 
