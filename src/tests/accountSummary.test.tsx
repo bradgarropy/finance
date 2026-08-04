@@ -62,6 +62,9 @@ test("shows account details and balance history", async () => {
 
     expect(rows).toHaveLength(3)
     expect(rows[1]).toHaveTextContent("August 3, 2026$123.45")
+    expect(
+        within(rows[1]).getByRole("link", {name: "August 3, 2026"}),
+    ).toHaveAttribute("href", "/capture/2026-08-03")
     expect(rows[2]).toHaveTextContent("July 27, 2026$100.00")
 })
 

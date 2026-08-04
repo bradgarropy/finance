@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-table"
 import {ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon} from "lucide-react"
 import {useState} from "react"
+import {Link} from "react-router"
 
 import {Button} from "~/components/ui/button"
 import {
@@ -68,9 +69,14 @@ const columns: ColumnDef<Balance>[] = [
         accessorKey: "date",
         header: ({column}) => <SortableHeader column={column} label="Date" />,
         cell: ({row}) => (
-            <time dateTime={row.original.date}>
-                {formatDate(row.original.date)}
-            </time>
+            <Link
+                className="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                to={`/capture/${row.original.date}`}
+            >
+                <time dateTime={row.original.date}>
+                    {formatDate(row.original.date)}
+                </time>
+            </Link>
         ),
     },
     {

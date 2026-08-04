@@ -60,6 +60,16 @@ const renderRoute = () => {
                         date: "2026-07-27",
                         id: 5,
                     },
+                    {
+                        accountCategory: "investment",
+                        accountId: 6,
+                        accountName: "Investment",
+                        accountSortOrder: 60,
+                        accountType: "asset",
+                        amountCents: 0,
+                        date: "2026-07-27",
+                        id: 6,
+                    },
                 ],
                 date: "2026-07-27",
                 nextDate: "2026-08-03",
@@ -133,6 +143,12 @@ test("renders the captured balances, spending, and savings summary", async () =>
     expect(within(balances).getByText("Mortgage")).toBeInTheDocument()
     expect(within(balances).getByText("Apple")).toBeInTheDocument()
     expect(
+        within(balances).getByRole("link", {name: "Checking"}),
+    ).toHaveAttribute("href", "/account/1")
+    expect(
+        within(balances).getByRole("link", {name: "Mortgage"}),
+    ).toHaveAttribute("href", "/account/5")
+    expect(
         within(balances).getByText("Cash, savings, and investments."),
     ).toBeInTheDocument()
     expect(
@@ -140,11 +156,22 @@ test("renders the captured balances, spending, and savings summary", async () =>
     ).toBeInTheDocument()
     expect(within(balances).queryByText("Total")).not.toBeInTheDocument()
     expect(within(spent).getByText("NFCU")).toBeInTheDocument()
+    expect(within(spent).getByRole("link", {name: "NFCU"})).toHaveAttribute(
+        "href",
+        "/account/3",
+    )
     expect(within(spent).queryByText("Apple")).not.toBeInTheDocument()
     expect(within(spent).getByText("$1,000.00")).toBeInTheDocument()
     expect(within(saved).getByText("Investments")).toBeInTheDocument()
+    expect(
+        within(saved).getByRole("link", {name: "Investments"}),
+    ).toHaveAttribute("href", "/account/6")
     expect(within(saved).queryByText("75%")).not.toBeInTheDocument()
     expect(within(saved).getByText("Savings")).toBeInTheDocument()
+    expect(within(saved).getByRole("link", {name: "Savings"})).toHaveAttribute(
+        "href",
+        "/account/2",
+    )
     expect(within(saved).queryByText("25%")).not.toBeInTheDocument()
     expect(
         within(saved).queryByText("Checking after cards"),
