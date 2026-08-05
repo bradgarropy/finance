@@ -2,10 +2,26 @@ import {expect, test} from "vitest"
 
 import {
     calculateCaptureSummary,
+    calculateChange,
     calculateSnapshot,
     calculateSnapshotSeries,
     getSnapshotWindow,
 } from "~/utils/finance"
+
+test("calculates absolute and percentage changes", () => {
+    expect(calculateChange(125_000, 100_000)).toEqual({
+        amountCents: 25_000,
+        percentage: 0.25,
+    })
+    expect(calculateChange(75_000, 100_000)).toEqual({
+        amountCents: -25_000,
+        percentage: -0.25,
+    })
+    expect(calculateChange(25_000, 0)).toEqual({
+        amountCents: 25_000,
+        percentage: null,
+    })
+})
 
 test("calculates assets, liabilities, and net worth from positive balances", () => {
     const snapshot = calculateSnapshot("2026-07-31", [

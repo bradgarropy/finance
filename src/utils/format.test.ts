@@ -6,7 +6,9 @@ import {
     formatDate,
     formatDateInput,
     formatMoney,
+    formatMoneyChange,
     formatMoneyParts,
+    formatPercentageChange,
 } from "~/utils/format"
 
 test("formats compact money for chart axes", () => {
@@ -22,6 +24,15 @@ test("formats cents as dollars", () => {
 
 test("formats negative cents as negative dollars", () => {
     expect(formatMoney(-123456)).toEqual("-$1,234.56")
+})
+
+test("formats signed financial changes", () => {
+    expect(formatMoneyChange(123_456)).toEqual("+$1,234.56")
+    expect(formatMoneyChange(-123_456)).toEqual("-$1,234.56")
+    expect(formatMoneyChange(0)).toEqual("$0.00")
+    expect(formatPercentageChange(0.1234)).toEqual("+12.34%")
+    expect(formatPercentageChange(-0.1234)).toEqual("-12.34%")
+    expect(formatPercentageChange(0)).toEqual("0%")
 })
 
 test("formats money into currency and amount parts", () => {

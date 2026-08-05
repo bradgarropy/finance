@@ -5,6 +5,20 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
     style: "currency",
 })
 
+const moneyChangeFormatter = new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    signDisplay: "exceptZero",
+    style: "currency",
+})
+
+const percentageChangeFormatter = new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 2,
+    signDisplay: "exceptZero",
+    style: "percent",
+})
+
 const dateInputFormatter = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
@@ -35,6 +49,14 @@ const compactMoneyFormatter = new Intl.NumberFormat("en-US", {
 
 export const formatMoney = (amountCents: number) => {
     return moneyFormatter.format(amountCents / 100)
+}
+
+export const formatMoneyChange = (amountCents: number) => {
+    return moneyChangeFormatter.format(amountCents / 100)
+}
+
+export const formatPercentageChange = (percentage: number) => {
+    return percentageChangeFormatter.format(percentage)
 }
 
 export const formatMoneyParts = (amountCents: number) => {

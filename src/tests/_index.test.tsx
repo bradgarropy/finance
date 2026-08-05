@@ -74,6 +74,9 @@ test("renders the latest financial snapshot", async () => {
     expect(snapshot).toHaveTextContent("Assets$1,250.00")
     expect(snapshot).toHaveTextContent("Liabilities$200.00")
     expect(snapshot).toHaveTextContent("Net worth$1,050.00")
+    expect(snapshot).toHaveTextContent("+$250.00 (+25%)")
+    expect(snapshot).toHaveTextContent("-$50.00 (-20%)")
+    expect(snapshot).toHaveTextContent("+$300.00 (+40%)")
     expect(
         screen.getByRole("heading", {name: "Financial history"}),
     ).toBeInTheDocument()

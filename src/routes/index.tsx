@@ -7,10 +7,54 @@ import {
 import {NetWorthChart} from "~/components/NetWorthChart"
 import {getDatabase} from "~/db/client"
 import {getAccounts, getAllBalances, getSettings} from "~/db/queries"
-import {calculateSnapshotSeries} from "~/utils/finance"
-import {formatDate, formatMoney} from "~/utils/format"
+import {
+    calculateChange,
+    calculateSnapshotSeries,
+    type FinanceChange,
+} from "~/utils/finance"
+import {
+    formatDate,
+    formatMoney,
+    formatMoneyChange,
+    formatPercentageChange,
+} from "~/utils/format"
 
 import type {Route} from "./+types/index"
+
+type SnapshotDeltaProps = {
+    change: FinanceChange | null
+    favorableDirection: "increase" | "decrease"
+}
+
+const SnapshotDelta = ({change, favorableDirection}: SnapshotDeltaProps) => {
+    if (!change) {
+        return <p className="mt-2 text-sm text-muted-foreground">-</p>
+    }
+
+    const isFavorable =
+        change.amountCents === 0
+            ? null
+            : favorableDirection === "increase"
+              ? change.amountCents > 0
+              : change.amountCents < 0
+    const color =
+        isFavorable === null
+            ? "text-muted-foreground"
+            : isFavorable
+              ? "text-emerald-600"
+              : "text-rose-600"
+
+    return (
+        <p className="mt-2 text-sm tabular-nums">
+            <span className={color}>
+                {formatMoneyChange(change.amountCents)}
+                {change.percentage === null
+                    ? null
+                    : ` (${formatPercentageChange(change.percentage)})`}
+            </span>
+        </p>
+    )
+}
 
 export const loader = async ({context}: Route.LoaderArgs) => {
     const database = getDatabase(context.cloudflare.env)
@@ -49,6 +93,24 @@ export const loader = async ({context}: Route.LoaderArgs) => {
 
 const Route = ({loaderData}: Route.ComponentProps) => {
     const latest = loaderData.snapshots.at(-1)
+    const previous = loaderData.snapshots.at(-2)
+    const changes =
+        latest && previous
+            ? {
+                  assets: calculateChange(
+                      latest.assetsCents,
+                      previous.assetsCents,
+                  ),
+                  liabilities: calculateChange(
+                      latest.liabilitiesCents,
+                      previous.liabilitiesCents,
+                  ),
+                  netWorth: calculateChange(
+                      latest.netWorthCents,
+                      previous.netWorthCents,
+                  ),
+              }
+            : null
 
     return (
         <>
@@ -87,6 +149,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                 <p className="mt-2 text-3xl font-semibold tabular-nums">
                                     {formatMoney(latest.assetsCents)}
                                 </p>
+                                <SnapshotDelta
+                                    change={changes?.assets ?? null}
+                                    favorableDirection="increase"
+                                />
                             </div>
 
                             <div className="border-t py-6 sm:border-t-0 sm:px-6">
@@ -96,6 +162,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                 <p className="mt-2 text-3xl font-semibold tabular-nums">
                                     {formatMoney(latest.liabilitiesCents)}
                                 </p>
+                                <SnapshotDelta
+                                    change={changes?.liabilities ?? null}
+                                    favorableDirection="decrease"
+                                />
                             </div>
 
                             <div className="border-t py-6 sm:border-t-0 sm:px-6 sm:last:pr-0">
@@ -105,6 +175,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                 <p className="mt-2 text-3xl font-semibold tabular-nums">
                                     {formatMoney(latest.netWorthCents)}
                                 </p>
+                                <SnapshotDelta
+                                    change={changes?.netWorth ?? null}
+                                    favorableDirection="increase"
+                                />
                             </div>
                         </section>
 
