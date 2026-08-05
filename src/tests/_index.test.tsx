@@ -29,7 +29,11 @@ const renderRoute = (
     const Stub = createRoutesStub([
         {
             Component: Route,
-            loader: () => ({latestBalances, snapshots}),
+            loader: () => ({
+                defaultWindow: 52,
+                latestBalances,
+                snapshots,
+            }),
             path: "/",
         },
     ])

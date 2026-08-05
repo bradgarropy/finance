@@ -1,14 +1,16 @@
 import {beforeEach, expect, test, vi} from "vitest"
 
-const {database, getAccounts, getAllBalances, getDatabase} = vi.hoisted(() => ({
-    database: {},
-    getAccounts: vi.fn(),
-    getAllBalances: vi.fn(),
-    getDatabase: vi.fn(),
-}))
+const {database, getAccounts, getAllBalances, getDatabase, getSettings} =
+    vi.hoisted(() => ({
+        database: {},
+        getAccounts: vi.fn(),
+        getAllBalances: vi.fn(),
+        getDatabase: vi.fn(),
+        getSettings: vi.fn(),
+    }))
 
 vi.mock("~/db/client", () => ({getDatabase}))
-vi.mock("~/db/queries", () => ({getAccounts, getAllBalances}))
+vi.mock("~/db/queries", () => ({getAccounts, getAllBalances, getSettings}))
 
 import {loader} from "~/routes/index"
 
@@ -18,6 +20,7 @@ beforeEach(() => {
 })
 
 test("loads balance history and derives financial snapshots", async () => {
+    getSettings.mockResolvedValue({defaultWindow: 52})
     getAccounts.mockResolvedValue([
         {
             archived: false,
@@ -74,7 +77,9 @@ test("loads balance history and derives financial snapshots", async () => {
     expect(getDatabase).toHaveBeenCalledOnce()
     expect(getAccounts).toHaveBeenCalledWith(database)
     expect(getAllBalances).toHaveBeenCalledWith(database)
+    expect(getSettings).toHaveBeenCalledWith(database)
     expect(result).toEqual({
+        defaultWindow: 52,
         latestBalances: [
             {
                 accountId: 1,

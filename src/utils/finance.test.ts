@@ -4,6 +4,7 @@ import {
     calculateCaptureSummary,
     calculateSnapshot,
     calculateSnapshotSeries,
+    getSnapshotWindow,
 } from "~/utils/finance"
 
 test("calculates assets, liabilities, and net worth from positive balances", () => {
@@ -64,6 +65,32 @@ test("groups balances into a chronological snapshot series", () => {
             netWorthCents: 70_000,
         },
     ])
+})
+
+test("selects the latest snapshot window", () => {
+    const snapshots = [
+        {
+            assetsCents: 100,
+            date: "2026-07-17",
+            liabilitiesCents: 10,
+            netWorthCents: 90,
+        },
+        {
+            assetsCents: 110,
+            date: "2026-07-24",
+            liabilitiesCents: 10,
+            netWorthCents: 100,
+        },
+        {
+            assetsCents: 120,
+            date: "2026-07-31",
+            liabilitiesCents: 10,
+            netWorthCents: 110,
+        },
+    ]
+
+    expect(getSnapshotWindow(snapshots, 2)).toEqual(snapshots.slice(-2))
+    expect(getSnapshotWindow(snapshots, "all")).toEqual(snapshots)
 })
 
 test("calculates a capture summary and savings plan", () => {

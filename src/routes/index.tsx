@@ -1,4 +1,4 @@
-import {Link} from "react-router"
+import {data, Link} from "react-router"
 
 import {
     type LatestAccountBalance,
@@ -6,7 +6,7 @@ import {
 } from "~/components/LatestAccountSnapshot"
 import {NetWorthChart} from "~/components/NetWorthChart"
 import {getDatabase} from "~/db/client"
-import {getAccounts, getAllBalances} from "~/db/queries"
+import {getAccounts, getAllBalances, getSettings} from "~/db/queries"
 import {calculateSnapshotSeries} from "~/utils/finance"
 import {formatDate, formatMoney} from "~/utils/format"
 
@@ -14,10 +14,15 @@ import type {Route} from "./+types/index"
 
 export const loader = async ({context}: Route.LoaderArgs) => {
     const database = getDatabase(context.cloudflare.env)
-    const [accounts, balances] = await Promise.all([
+    const [accounts, balances, settings] = await Promise.all([
         getAccounts(database),
         getAllBalances(database),
+        getSettings(database),
     ])
+
+    if (!settings) {
+        throw data("Settings are not configured.", {status: 500})
+    }
     const snapshots = calculateSnapshotSeries(balances)
     const latestDate = snapshots.at(-1)?.date
     const latestBalancesByAccountId = new Map(
@@ -35,7 +40,11 @@ export const loader = async ({context}: Route.LoaderArgs) => {
                 latestBalancesByAccountId.get(account.id)?.amountCents ?? null,
         }))
 
-    return {latestBalances, snapshots}
+    return {
+        defaultWindow: settings.defaultWindow,
+        latestBalances,
+        snapshots,
+    }
 }
 
 const Route = ({loaderData}: Route.ComponentProps) => {
@@ -116,7 +125,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                 </p>
                             </div>
 
-                            <NetWorthChart snapshots={loaderData.snapshots} />
+                            <NetWorthChart
+                                defaultWindow={loaderData.defaultWindow}
+                                snapshots={loaderData.snapshots}
+                            />
                         </section>
 
                         <LatestAccountSnapshot

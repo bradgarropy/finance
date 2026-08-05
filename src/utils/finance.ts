@@ -68,6 +68,13 @@ export const calculateSnapshotSeries = (
         .map(([date, datedBalances]) => calculateSnapshot(date, datedBalances))
 }
 
+export const getSnapshotWindow = (
+    snapshots: FinanceSnapshot[],
+    window: number | "all",
+) => {
+    return window === "all" ? snapshots : snapshots.slice(-window)
+}
+
 export const calculateCaptureSummary = (
     balances: CaptureBalanceInput[],
     settings: CaptureSettingsInput,
