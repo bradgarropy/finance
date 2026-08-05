@@ -1,3 +1,5 @@
+import {Link} from "react-router"
+
 import {getDatabase} from "~/db/client"
 import {getAllBalances} from "~/db/queries"
 import {calculateSnapshotSeries} from "~/utils/finance"
@@ -22,9 +24,19 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                 <div className="mb-10 space-y-2">
                     <h1 className="text-3xl font-bold">Overview</h1>
                     <p className="text-muted-foreground">
-                        {latest
-                            ? `Snapshot for ${formatDate(latest.date)}`
-                            : "Your latest financial snapshot."}
+                        {latest ? (
+                            <>
+                                Latest capture:{" "}
+                                <Link
+                                    className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                                    to={`/capture/${latest.date}`}
+                                >
+                                    {formatDate(latest.date)}
+                                </Link>
+                            </>
+                        ) : (
+                            "Your latest financial snapshot."
+                        )}
                     </p>
                 </div>
 

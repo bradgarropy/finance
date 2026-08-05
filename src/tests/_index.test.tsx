@@ -43,7 +43,11 @@ test("renders the latest financial snapshot", async () => {
         await screen.findByRole("heading", {name: "Overview"}),
     ).toBeInTheDocument()
     expect(document.title).toEqual("💵 finance | overview")
-    expect(screen.getByText("Snapshot for July 31, 2026")).toBeInTheDocument()
+    expect(screen.getByText(/Latest capture:/)).toBeInTheDocument()
+    expect(screen.getByRole("link", {name: "July 31, 2026"})).toHaveAttribute(
+        "href",
+        "/capture/2026-07-31",
+    )
 
     const snapshot = screen.getByRole("region", {
         name: "Latest financial snapshot",
