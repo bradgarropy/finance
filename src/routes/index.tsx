@@ -1,17 +1,41 @@
 import {Link} from "react-router"
 
+import {
+    type LatestAccountBalance,
+    LatestAccountSnapshot,
+} from "~/components/LatestAccountSnapshot"
 import {NetWorthChart} from "~/components/NetWorthChart"
 import {getDatabase} from "~/db/client"
-import {getAllBalances} from "~/db/queries"
+import {getAccounts, getAllBalances} from "~/db/queries"
 import {calculateSnapshotSeries} from "~/utils/finance"
 import {formatDate, formatMoney} from "~/utils/format"
 
 import type {Route} from "./+types/index"
 
 export const loader = async ({context}: Route.LoaderArgs) => {
-    const balances = await getAllBalances(getDatabase(context.cloudflare.env))
+    const database = getDatabase(context.cloudflare.env)
+    const [accounts, balances] = await Promise.all([
+        getAccounts(database),
+        getAllBalances(database),
+    ])
+    const snapshots = calculateSnapshotSeries(balances)
+    const latestDate = snapshots.at(-1)?.date
+    const latestBalancesByAccountId = new Map(
+        balances
+            .filter(balance => balance.date === latestDate)
+            .map(balance => [balance.accountId, balance]),
+    )
+    const latestBalances: LatestAccountBalance[] = accounts
+        .filter(account => !account.archived)
+        .map(account => ({
+            accountId: account.id,
+            accountName: account.name,
+            accountType: account.type,
+            amountCents:
+                latestBalancesByAccountId.get(account.id)?.amountCents ?? null,
+        }))
 
-    return {snapshots: calculateSnapshotSeries(balances)}
+    return {latestBalances, snapshots}
 }
 
 const Route = ({loaderData}: Route.ComponentProps) => {
@@ -94,6 +118,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
                             <NetWorthChart snapshots={loaderData.snapshots} />
                         </section>
+
+                        <LatestAccountSnapshot
+                            balances={loaderData.latestBalances}
+                        />
                     </>
                 ) : (
                     <p className="border-y py-8 text-muted-foreground">

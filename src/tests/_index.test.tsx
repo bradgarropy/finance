@@ -11,11 +11,25 @@ const renderRoute = (
         liabilitiesCents: number
         netWorthCents: number
     }>,
+    latestBalances = [
+        {
+            accountId: 1,
+            accountName: "Checking",
+            accountType: "asset" as const,
+            amountCents: 125_000,
+        },
+        {
+            accountId: 2,
+            accountName: "NFCU",
+            accountType: "liability" as const,
+            amountCents: 20_000,
+        },
+    ],
 ) => {
     const Stub = createRoutesStub([
         {
             Component: Route,
-            loader: () => ({snapshots}),
+            loader: () => ({latestBalances, snapshots}),
             path: "/",
         },
     ])
@@ -64,10 +78,17 @@ test("renders the latest financial snapshot", async () => {
             name: "Assets, liabilities, and net worth over time",
         }),
     ).toBeInTheDocument()
+    expect(
+        screen.getByRole("heading", {name: "Latest accounts"}),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("link", {name: "Checking"})).toHaveAttribute(
+        "href",
+        "/account/1",
+    )
 })
 
 test("renders an empty state without snapshots", async () => {
-    renderRoute([])
+    renderRoute([], [])
 
     await screen.findByRole("heading", {name: "Overview"})
 
