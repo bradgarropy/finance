@@ -19,6 +19,20 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
 })
 
+const chartDateFormatter = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+})
+
+const compactMoneyFormatter = new Intl.NumberFormat("en-US", {
+    compactDisplay: "short",
+    currency: "USD",
+    maximumFractionDigits: 1,
+    notation: "compact",
+    style: "currency",
+})
+
 export const formatMoney = (amountCents: number) => {
     return moneyFormatter.format(amountCents / 100)
 }
@@ -37,6 +51,14 @@ export const formatMoneyParts = (amountCents: number) => {
 
 export const formatDate = (date: string) => {
     return dateFormatter.format(new Date(`${date}T00:00:00.000Z`))
+}
+
+export const formatChartDate = (date: string) => {
+    return chartDateFormatter.format(new Date(`${date}T00:00:00.000Z`))
+}
+
+export const formatCompactMoney = (amountCents: number) => {
+    return compactMoneyFormatter.format(amountCents / 100)
 }
 
 export const formatDateInput = (date: Date) => {

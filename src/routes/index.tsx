@@ -1,5 +1,6 @@
 import {Link} from "react-router"
 
+import {NetWorthChart} from "~/components/NetWorthChart"
 import {getDatabase} from "~/db/client"
 import {getAllBalances} from "~/db/queries"
 import {calculateSnapshotSeries} from "~/utils/finance"
@@ -41,37 +42,59 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                 </div>
 
                 {latest ? (
-                    <section
-                        aria-label="Latest financial snapshot"
-                        className="grid border-y sm:grid-cols-3 sm:divide-x"
-                    >
-                        <div className="py-6 sm:px-6 sm:first:pl-0">
-                            <p className="text-sm font-medium text-muted-foreground">
-                                Assets
-                            </p>
-                            <p className="mt-2 text-3xl font-semibold tabular-nums">
-                                {formatMoney(latest.assetsCents)}
-                            </p>
-                        </div>
+                    <>
+                        <section
+                            aria-label="Latest financial snapshot"
+                            className="grid border-y sm:grid-cols-3 sm:divide-x"
+                        >
+                            <div className="py-6 sm:px-6 sm:first:pl-0">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Assets
+                                </p>
+                                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                                    {formatMoney(latest.assetsCents)}
+                                </p>
+                            </div>
 
-                        <div className="border-t py-6 sm:border-t-0 sm:px-6">
-                            <p className="text-sm font-medium text-muted-foreground">
-                                Liabilities
-                            </p>
-                            <p className="mt-2 text-3xl font-semibold tabular-nums">
-                                {formatMoney(latest.liabilitiesCents)}
-                            </p>
-                        </div>
+                            <div className="border-t py-6 sm:border-t-0 sm:px-6">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Liabilities
+                                </p>
+                                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                                    {formatMoney(latest.liabilitiesCents)}
+                                </p>
+                            </div>
 
-                        <div className="border-t py-6 sm:border-t-0 sm:px-6 sm:last:pr-0">
-                            <p className="text-sm font-medium text-muted-foreground">
-                                Net worth
-                            </p>
-                            <p className="mt-2 text-3xl font-semibold tabular-nums">
-                                {formatMoney(latest.netWorthCents)}
-                            </p>
-                        </div>
-                    </section>
+                            <div className="border-t py-6 sm:border-t-0 sm:px-6 sm:last:pr-0">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Net worth
+                                </p>
+                                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                                    {formatMoney(latest.netWorthCents)}
+                                </p>
+                            </div>
+                        </section>
+
+                        <section
+                            className="mt-14"
+                            aria-labelledby="history-heading"
+                        >
+                            <div className="mb-6 space-y-1">
+                                <h2
+                                    className="text-xl font-semibold"
+                                    id="history-heading"
+                                >
+                                    Financial history
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Assets, liabilities, and net worth over
+                                    time.
+                                </p>
+                            </div>
+
+                            <NetWorthChart snapshots={loaderData.snapshots} />
+                        </section>
+                    </>
                 ) : (
                     <p className="border-y py-8 text-muted-foreground">
                         No balance snapshots yet.

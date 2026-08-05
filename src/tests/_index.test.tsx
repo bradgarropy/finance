@@ -56,6 +56,14 @@ test("renders the latest financial snapshot", async () => {
     expect(snapshot).toHaveTextContent("Assets$1,250.00")
     expect(snapshot).toHaveTextContent("Liabilities$200.00")
     expect(snapshot).toHaveTextContent("Net worth$1,050.00")
+    expect(
+        screen.getByRole("heading", {name: "Financial history"}),
+    ).toBeInTheDocument()
+    expect(
+        screen.getByRole("img", {
+            name: "Assets, liabilities, and net worth over time",
+        }),
+    ).toBeInTheDocument()
 })
 
 test("renders an empty state without snapshots", async () => {
