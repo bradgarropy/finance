@@ -279,7 +279,7 @@ const exportNumbers = (filePath: string) => {
         throw new Error("Importing a Numbers file requires macOS and Numbers.")
     }
 
-    const exportDir = mkdtempSync(path.join(tmpdir(), "finance-import-"))
+    const exportDir = mkdtempSync(path.join(tmpdir(), "wealth-import-"))
 
     try {
         execFileSync(

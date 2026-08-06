@@ -1,0 +1,23 @@
+<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+    <rect width="180" height="180" fill="#F5F5F2" />
+    <g transform="translate(32.4 32.4) scale(1.8)">
+        <g fill="#111111">
+            <rect x="4" y="40" width="9" height="8" rx="2" />
+            <rect x="4" y="52" width="9" height="8" rx="2" />
+            <rect x="16" y="40" width="9" height="8" rx="2" />
+            <rect x="16" y="52" width="9" height="8" rx="2" />
+            <rect x="28" y="16" width="9" height="8" rx="2" />
+            <rect x="28" y="28" width="9" height="8" rx="2" />
+            <rect x="28" y="40" width="9" height="8" rx="2" />
+            <rect x="28" y="52" width="9" height="8" rx="2" />
+            <rect x="40" y="40" width="9" height="8" rx="2" />
+            <rect x="40" y="52" width="9" height="8" rx="2" />
+            <rect x="52" y="16" width="9" height="8" rx="2" />
+            <rect x="52" y="28" width="9" height="8" rx="2" />
+            <rect x="52" y="40" width="9" height="8" rx="2" />
+            <rect x="52" y="52" width="9" height="8" rx="2" />
+        </g>
+        <rect x="4" y="28" width="9" height="8" rx="2" fill="#FF4F40" />
+        <rect x="52" y="4" width="9" height="8" rx="2" fill="#00B875" />
+    </g>
+</svg>

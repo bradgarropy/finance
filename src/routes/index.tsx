@@ -41,8 +41,8 @@ const SnapshotDelta = ({change, favorableDirection}: SnapshotDeltaProps) => {
         isFavorable === null
             ? "text-muted-foreground"
             : isFavorable
-              ? "text-emerald-600"
-              : "text-rose-600"
+              ? "text-financial-positive-foreground"
+              : "text-financial-negative-foreground"
 
     return (
         <p className="mt-1 text-xs tabular-nums sm:mt-2 sm:text-sm">
@@ -114,7 +114,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
     return (
         <>
-            <title>💵 finance | overview</title>
+            <title>wealth | overview</title>
 
             <main className="mx-auto w-full min-w-0 max-w-5xl py-4 sm:py-16">
                 <div className="mb-8 space-y-2 sm:mb-10">

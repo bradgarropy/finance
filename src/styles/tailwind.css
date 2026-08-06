@@ -36,6 +36,18 @@
 
     --color-chart-1: var(--chart-1);
 
+    --color-financial-negative-foreground: var(--financial-negative-foreground);
+
+    --color-financial-negative: var(--financial-negative);
+
+    --color-financial-positive-foreground: var(--financial-positive-foreground);
+
+    --color-financial-positive: var(--financial-positive);
+
+    --color-brand-red: var(--brand-red);
+
+    --color-brand-green: var(--brand-green);
+
     --color-ring: var(--ring);
 
     --color-input: var(--input);
@@ -88,6 +100,26 @@
 }
 
 :root {
+    --brand-green: #00b875;
+
+    --brand-red: #ff4f40;
+
+    --financial-positive: var(--brand-green);
+
+    --financial-negative: var(--brand-red);
+
+    --financial-positive-foreground: color-mix(
+        in srgb,
+        var(--financial-positive) 68%,
+        black
+    );
+
+    --financial-negative-foreground: color-mix(
+        in srgb,
+        var(--financial-negative) 78%,
+        black
+    );
+
     --background: oklch(1 0 0);
 
     --foreground: oklch(0.145 0 0);
@@ -154,6 +186,10 @@
 }
 
 .dark {
+    --financial-positive-foreground: var(--financial-positive);
+
+    --financial-negative-foreground: var(--financial-negative);
+
     --background: oklch(0.145 0 0);
 
     --foreground: oklch(0.985 0 0);

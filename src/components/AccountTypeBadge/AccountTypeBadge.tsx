@@ -7,9 +7,9 @@ type AccountTypeBadgeProps = {
 }
 
 const styles: Record<Account["type"], string> = {
-    asset: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
+    asset: "border-financial-positive/25 bg-financial-positive/10 text-financial-positive-foreground dark:border-financial-positive/40 dark:bg-financial-positive/15",
     liability:
-        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300",
+        "border-financial-negative/25 bg-financial-negative/10 text-financial-negative-foreground dark:border-financial-negative/40 dark:bg-financial-negative/15",
 }
 
 const AccountTypeBadge = ({type}: AccountTypeBadgeProps) => {

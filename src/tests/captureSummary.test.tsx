@@ -103,7 +103,7 @@ test("renders the captured balances, spending, and savings summary", async () =>
     expect(
         await screen.findByRole("heading", {name: "Capture summary"}),
     ).toBeInTheDocument()
-    expect(document.title).toEqual("💵 finance | capture summary")
+    expect(document.title).toEqual("wealth | capture summary")
     expect(screen.getByText("July 27, 2026")).toBeInTheDocument()
     expect(screen.getByRole("link", {name: "New capture"})).toHaveAttribute(
         "href",

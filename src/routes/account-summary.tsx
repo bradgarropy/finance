@@ -46,7 +46,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
     return (
         <>
-            <title>{`💵 finance | ${account.name}`}</title>
+            <title>{`wealth | ${account.name}`}</title>
 
             <main className="mx-auto w-full max-w-3xl py-8 sm:py-16">
                 <header className="mb-10 space-y-6">

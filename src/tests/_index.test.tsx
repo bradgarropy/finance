@@ -60,7 +60,7 @@ test("renders the latest financial snapshot", async () => {
     expect(
         await screen.findByRole("heading", {name: "Overview"}),
     ).toBeInTheDocument()
-    expect(document.title).toEqual("💵 finance | overview")
+    expect(document.title).toEqual("wealth | overview")
     expect(screen.getByText(/Latest capture:/)).toBeInTheDocument()
     expect(screen.getByRole("link", {name: "July 31, 2026"})).toHaveAttribute(
         "href",

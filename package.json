@@ -1,7 +1,7 @@
 {
-    "name": "finance",
+    "name": "wealth",
     "version": "0.0.1",
-    "description": "💵 finance",
+    "description": "💵 wealth",
     "type": "module",
     "keywords": [
         "typescript",
@@ -35,8 +35,8 @@
         "start": "npm run build && wrangler dev",
         "preview": "npm run build && wrangler dev",
         "deploy": "npm run db:migrate:prod && wrangler deploy",
-        "db:migrate": "wrangler d1 migrations apply finance --local",
-        "db:migrate:prod": "wrangler d1 migrations apply finance --remote",
+        "db:migrate": "wrangler d1 migrations apply DB --local",
+        "db:migrate:prod": "wrangler d1 migrations apply DB --remote",
         "db:seed": "tsx scripts/seed.ts",
         "typegen": "wrangler types && react-router typegen",
         "lint": "eslint .",

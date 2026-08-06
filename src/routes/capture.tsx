@@ -218,7 +218,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
     return (
         <>
-            <title>💵 finance | capture</title>
+            <title>wealth | capture</title>
 
             <main className="mx-auto flex w-full max-w-xl flex-col gap-10 py-8 sm:py-16">
                 <Progress
@@ -399,7 +399,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                         {fetcher.data?.error ? (
                             <p
                                 role="alert"
-                                className="text-center text-sm text-red-600"
+                                className="text-center text-sm text-destructive"
                             >
                                 {fetcher.data.error}
                             </p>
