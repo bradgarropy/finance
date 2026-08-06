@@ -38,4 +38,12 @@ test("renders the current settings", async () => {
         screen.getByRole("combobox", {name: "Default window"}),
     ).toHaveTextContent("52 weeks")
     expect(screen.getByRole("button", {name: "Save settings"})).toBeEnabled()
+    expect(
+        screen.getByRole("link", {name: "Built by Brad Garropy"}),
+    ).toHaveAttribute("href", "https://bradgarropy.com")
+    expect(screen.getByRole("link", {name: "GitHub"})).toHaveAttribute(
+        "href",
+        "https://github.com/bradgarropy/finance",
+    )
+    expect(screen.getByText("finance@0.0.1")).toBeInTheDocument()
 })
