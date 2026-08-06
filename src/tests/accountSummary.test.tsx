@@ -52,7 +52,7 @@ test("shows account details and balance history", async () => {
     expect(
         await screen.findByRole("heading", {name: "Old Card"}),
     ).toBeInTheDocument()
-    expect(document.title).toEqual("💵 finance | Old Card")
+    expect(document.title).toEqual("wealth | Old Card")
     expect(screen.getByText(/liability/i)).toBeInTheDocument()
     expect(screen.getByText("credit")).toBeInTheDocument()
     expect(screen.getByText("Archived")).toBeInTheDocument()

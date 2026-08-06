@@ -43,7 +43,7 @@ test("lists active and archived accounts", async () => {
     expect(
         await screen.findByRole("heading", {name: "Accounts"}),
     ).toBeInTheDocument()
-    expect(document.title).toEqual("💵 finance | accounts")
+    expect(document.title).toEqual("wealth | accounts")
 
     const active = screen.getByRole("region", {name: "Active"})
     const archived = screen.getByRole("region", {name: "Archived"})

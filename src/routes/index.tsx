@@ -114,7 +114,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
     return (
         <>
-            <title>💵 finance | overview</title>
+            <title>wealth | overview</title>
 
             <main className="mx-auto w-full min-w-0 max-w-5xl py-4 sm:py-16">
                 <div className="mb-8 space-y-2 sm:mb-10">

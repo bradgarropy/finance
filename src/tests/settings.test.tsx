@@ -28,7 +28,7 @@ test("renders the current settings", async () => {
     expect(
         await screen.findByRole("heading", {name: "Settings"}),
     ).toBeInTheDocument()
-    expect(document.title).toEqual("💵 finance | settings")
+    expect(document.title).toEqual("wealth | settings")
     expect(screen.getByLabelText("Checking baseline")).toHaveValue("20,000.00")
     expect(screen.getByLabelText("Emergency baseline")).toHaveValue("60,000.00")
     expect(screen.getByLabelText("Investments")).toHaveValue("75")

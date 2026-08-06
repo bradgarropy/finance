@@ -11,7 +11,7 @@ test("renders", () => {
         </MemoryRouter>,
     )
 
-    expect(screen.getByRole("link", {name: "finance"})).toHaveAttribute(
+    expect(screen.getByRole("link", {name: "wealth"})).toHaveAttribute(
         "href",
         "/",
     )

@@ -68,7 +68,7 @@ test("renders the date step", async () => {
             name: "When are these balances from?",
         }),
     ).toBeInTheDocument()
-    expect(document.title).toEqual("💵 finance | capture")
+    expect(document.title).toEqual("wealth | capture")
     expect(screen.getByText("1 of 7")).toBeInTheDocument()
     expect(screen.getByRole("progressbar")).toHaveAttribute(
         "aria-valuetext",

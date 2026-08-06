@@ -218,7 +218,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
 
     return (
         <>
-            <title>💵 finance | capture</title>
+            <title>wealth | capture</title>
 
             <main className="mx-auto flex w-full max-w-xl flex-col gap-10 py-8 sm:py-16">
                 <Progress
