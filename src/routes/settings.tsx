@@ -266,7 +266,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                             <span>Built by</span>
                             <span
                                 aria-hidden="true"
-                                className="size-5 bg-current [mask-image:url('/bg.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+                                className="size-5 bg-current mask-[url('/bg.svg')] mask-center mask-no-repeat mask-contain"
                             />
                         </a>
 
@@ -279,7 +279,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                             >
                                 <span
                                     aria-hidden="true"
-                                    className="size-4 bg-current [mask-image:url('/github.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+                                    className="size-4 bg-current mask-[url('/github.svg')] mask-center mask-no-repeat mask-contain"
                                 />
                                 GitHub
                             </a>
