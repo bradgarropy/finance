@@ -1,16 +1,20 @@
 import {beforeEach, expect, test, vi} from "vitest"
 
-const {database, getAccount, getBalancesByAccountId, getDatabase} = vi.hoisted(
-    () => ({
+const {database, getAccount, getBalancesByAccountId, getDatabase, getSettings} =
+    vi.hoisted(() => ({
         database: {},
         getAccount: vi.fn(),
         getBalancesByAccountId: vi.fn(),
         getDatabase: vi.fn(),
-    }),
-)
+        getSettings: vi.fn(),
+    }))
 
 vi.mock("~/db/client", () => ({getDatabase}))
-vi.mock("~/db/queries", () => ({getAccount, getBalancesByAccountId}))
+vi.mock("~/db/queries", () => ({
+    getAccount,
+    getBalancesByAccountId,
+    getSettings,
+}))
 
 import {loader} from "~/routes/account-summary"
 
@@ -37,6 +41,7 @@ beforeEach(() => {
     getDatabase.mockReturnValue(database)
     getAccount.mockResolvedValue(account)
     getBalancesByAccountId.mockResolvedValue(balances)
+    getSettings.mockResolvedValue({defaultWindow: 52})
 })
 
 test("loads an account and its balance history", async () => {
@@ -49,7 +54,8 @@ test("loads an account and its balance history", async () => {
     expect(getDatabase).toHaveBeenCalledOnce()
     expect(getAccount).toHaveBeenCalledWith(database, 1)
     expect(getBalancesByAccountId).toHaveBeenCalledWith(database, 1)
-    expect(result).toEqual({account, balances})
+    expect(getSettings).toHaveBeenCalledWith(database)
+    expect(result).toEqual({account, balances, defaultWindow: 52})
 })
 
 test("rejects an invalid account id before querying D1", async () => {

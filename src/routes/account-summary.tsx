@@ -2,12 +2,13 @@ import {ChevronLeftIcon} from "lucide-react"
 import {data, Link} from "react-router"
 import {z} from "zod"
 
+import {AccountBalanceChart} from "~/components/AccountBalanceChart"
 import {AccountTypeBadge} from "~/components/AccountTypeBadge"
 import {BalanceTable} from "~/components/BalanceTable"
 import {Badge} from "~/components/ui/badge"
 import {buttonVariants} from "~/components/ui/button"
 import {getDatabase} from "~/db/client"
-import {getAccount, getBalancesByAccountId} from "~/db/queries"
+import {getAccount, getBalancesByAccountId, getSettings} from "~/db/queries"
 
 import type {Route} from "./+types/account-summary"
 
@@ -23,16 +24,21 @@ export const loader = async ({context, params}: Route.LoaderArgs) => {
     }
 
     const db = getDatabase(context.cloudflare.env)
-    const [account, balances] = await Promise.all([
+    const [account, balances, settings] = await Promise.all([
         getAccount(db, accountIdResult.data),
         getBalancesByAccountId(db, accountIdResult.data),
+        getSettings(db),
     ])
 
     if (!account) {
         throw data("Account not found.", {status: 404})
     }
 
-    return {account, balances}
+    if (!settings) {
+        throw data("Settings are not configured.", {status: 500})
+    }
+
+    return {account, balances, defaultWindow: settings.defaultWindow}
 }
 
 const Route = ({loaderData}: Route.ComponentProps) => {
@@ -84,7 +90,14 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                     </div>
 
                     {balances.length > 0 ? (
-                        <BalanceTable balances={balances} />
+                        <div className="space-y-10">
+                            <AccountBalanceChart
+                                accountType={account.type}
+                                balances={balances}
+                                defaultWindow={loaderData.defaultWindow}
+                            />
+                            <BalanceTable balances={balances} />
+                        </div>
                     ) : (
                         <p className="border-t py-6 text-sm text-muted-foreground">
                             No balance history.

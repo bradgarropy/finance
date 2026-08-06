@@ -8,13 +8,11 @@ import {
 import {
     type ChartConfig,
     ChartContainer,
-    ChartLegend,
-    ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
 } from "~/components/ui/chart"
+import type {Account, Balance} from "~/db/queries"
 import {defaultWindows} from "~/db/schema"
-import {type FinanceSnapshot, getSnapshotWindow} from "~/utils/finance"
 import {
     formatChartDate,
     formatCompactMoney,
@@ -22,47 +20,52 @@ import {
     formatMoney,
 } from "~/utils/format"
 
-const chartConfig = {
-    assetsCents: {
-        color: "oklch(0.627 0.194 149.214)",
-        label: "Assets",
-    },
-    liabilitiesCents: {
-        color: "oklch(0.645 0.246 16.439)",
-        label: "Liabilities",
-    },
-    netWorthCents: {
-        color: "var(--foreground)",
-        label: "Net worth",
-    },
-} satisfies ChartConfig
-
-type NetWorthChartProps = {
+type AccountBalanceChartProps = {
+    accountType: Account["type"]
+    balances: Pick<Balance, "amountCents" | "date">[]
     defaultWindow: number
-    snapshots: FinanceSnapshot[]
 }
 
-const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
+const AccountBalanceChart = ({
+    accountType,
+    balances,
+    defaultWindow,
+}: AccountBalanceChartProps) => {
     const initialWindow =
         defaultWindows.find(window => window === defaultWindow) ?? 52
     const [window, setWindow] = useState<HistoryWindow>(initialWindow)
-    const visibleSnapshots = getSnapshotWindow(snapshots, window)
+    const chronologicalBalances = [...balances].sort((left, right) =>
+        left.date.localeCompare(right.date),
+    )
+    const visibleBalances =
+        window === "all"
+            ? chronologicalBalances
+            : chronologicalBalances.slice(-window)
+    const chartConfig = {
+        amountCents: {
+            color:
+                accountType === "asset"
+                    ? "oklch(0.627 0.194 149.214)"
+                    : "oklch(0.645 0.246 16.439)",
+            label: "Balance",
+        },
+    } satisfies ChartConfig
 
     return (
-        <>
+        <div className="min-w-0">
             <div className="mb-4">
                 <ChartRangePicker value={window} onValueChange={setWindow} />
             </div>
 
             <ChartContainer
-                aria-label="Assets, liabilities, and net worth over time"
-                className="h-64 min-w-0 w-full sm:h-96"
+                aria-label="Account balance over time"
+                className="h-64 min-w-0 w-full sm:h-80"
                 config={chartConfig}
                 role="img"
             >
                 <LineChart
                     accessibilityLayer
-                    data={visibleSnapshots}
+                    data={visibleBalances}
                     margin={{left: 8, right: 8, top: 8}}
                     style={{cursor: "auto"}}
                 >
@@ -77,6 +80,7 @@ const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
                     />
                     <YAxis
                         axisLine={false}
+                        domain={["auto", "auto"]}
                         tickFormatter={formatCompactMoney}
                         tickLine={false}
                         tickMargin={8}
@@ -85,12 +89,10 @@ const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
                     <ChartTooltip
                         content={
                             <ChartTooltipContent
-                                formatter={(value, name) => (
+                                formatter={value => (
                                     <>
                                         <span className="text-muted-foreground">
-                                            {chartConfig[
-                                                name as keyof typeof chartConfig
-                                            ]?.label ?? name}
+                                            Balance
                                         </span>
                                         <span className="ml-auto font-mono font-medium text-foreground tabular-nums">
                                             {formatMoney(Number(value))}
@@ -107,35 +109,17 @@ const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
                             />
                         }
                     />
-                    <ChartLegend
-                        content={<ChartLegendContent />}
-                        verticalAlign="top"
-                    />
                     <Line
-                        dataKey="assetsCents"
+                        dataKey="amountCents"
                         dot={false}
-                        stroke="var(--color-assetsCents)"
-                        strokeWidth={2}
-                        type="linear"
-                    />
-                    <Line
-                        dataKey="liabilitiesCents"
-                        dot={false}
-                        stroke="var(--color-liabilitiesCents)"
-                        strokeWidth={2}
-                        type="linear"
-                    />
-                    <Line
-                        dataKey="netWorthCents"
-                        dot={false}
-                        stroke="var(--color-netWorthCents)"
+                        stroke="var(--color-amountCents)"
                         strokeWidth={2.5}
                         type="linear"
                     />
                 </LineChart>
             </ChartContainer>
-        </>
+        </div>
     )
 }
 
-export {NetWorthChart}
+export {AccountBalanceChart}
