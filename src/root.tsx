@@ -32,7 +32,7 @@ const App = () => {
                 <div className="isolate grid min-h-screen grid-rows-[auto_1fr_auto]">
                     <Header />
 
-                    <div className="p-8">
+                    <div className="min-w-0 p-4 sm:p-8">
                         <Outlet />
                     </div>
 

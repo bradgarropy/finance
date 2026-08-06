@@ -11,6 +11,11 @@ export type FinanceSnapshot = {
     netWorthCents: number
 }
 
+export type FinanceChange = {
+    amountCents: number
+    percentage: number | null
+}
+
 type CaptureBalanceInput = Pick<Balance, "amountCents"> & {
     accountCategory: Account["category"]
     accountName: Account["name"]
@@ -66,6 +71,25 @@ export const calculateSnapshotSeries = (
     return [...balancesByDate.entries()]
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([date, datedBalances]) => calculateSnapshot(date, datedBalances))
+}
+
+export const getSnapshotWindow = (
+    snapshots: FinanceSnapshot[],
+    window: number | "all",
+) => {
+    return window === "all" ? snapshots : snapshots.slice(-window)
+}
+
+export const calculateChange = (
+    currentCents: number,
+    previousCents: number,
+): FinanceChange => {
+    const amountCents = currentCents - previousCents
+
+    return {
+        amountCents,
+        percentage: previousCents === 0 ? null : amountCents / previousCents,
+    }
 }
 
 export const calculateCaptureSummary = (

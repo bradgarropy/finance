@@ -11,11 +11,29 @@ const renderRoute = (
         liabilitiesCents: number
         netWorthCents: number
     }>,
+    latestBalances = [
+        {
+            accountId: 1,
+            accountName: "Checking",
+            accountType: "asset" as const,
+            amountCents: 125_000,
+        },
+        {
+            accountId: 2,
+            accountName: "NFCU",
+            accountType: "liability" as const,
+            amountCents: 20_000,
+        },
+    ],
 ) => {
     const Stub = createRoutesStub([
         {
             Component: Route,
-            loader: () => ({snapshots}),
+            loader: () => ({
+                defaultWindow: 52,
+                latestBalances,
+                snapshots,
+            }),
             path: "/",
         },
     ])
@@ -43,7 +61,11 @@ test("renders the latest financial snapshot", async () => {
         await screen.findByRole("heading", {name: "Overview"}),
     ).toBeInTheDocument()
     expect(document.title).toEqual("💵 finance | overview")
-    expect(screen.getByText("Snapshot for July 31, 2026")).toBeInTheDocument()
+    expect(screen.getByText(/Latest capture:/)).toBeInTheDocument()
+    expect(screen.getByRole("link", {name: "July 31, 2026"})).toHaveAttribute(
+        "href",
+        "/capture/2026-07-31",
+    )
 
     const snapshot = screen.getByRole("region", {
         name: "Latest financial snapshot",
@@ -52,10 +74,28 @@ test("renders the latest financial snapshot", async () => {
     expect(snapshot).toHaveTextContent("Assets$1,250.00")
     expect(snapshot).toHaveTextContent("Liabilities$200.00")
     expect(snapshot).toHaveTextContent("Net worth$1,050.00")
+    expect(snapshot).toHaveTextContent("+$250.00 (+25%)")
+    expect(snapshot).toHaveTextContent("-$50.00 (-20%)")
+    expect(snapshot).toHaveTextContent("+$300.00 (+40%)")
+    expect(
+        screen.getByRole("heading", {name: "Financial history"}),
+    ).toBeInTheDocument()
+    expect(
+        screen.getByRole("img", {
+            name: "Assets, liabilities, and net worth over time",
+        }),
+    ).toBeInTheDocument()
+    expect(
+        screen.getByRole("heading", {name: "Latest accounts"}),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("link", {name: "Checking"})).toHaveAttribute(
+        "href",
+        "/account/1",
+    )
 })
 
 test("renders an empty state without snapshots", async () => {
-    renderRoute([])
+    renderRoute([], [])
 
     await screen.findByRole("heading", {name: "Overview"})
 
