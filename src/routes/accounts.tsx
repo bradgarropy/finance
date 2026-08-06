@@ -135,7 +135,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                         </p>
                     </div>
 
-                    <Button onClick={handleNew}>
+                    <Button variant="outline" onClick={handleNew}>
                         <PlusIcon />
                         New account
                     </Button>
