@@ -21,6 +21,7 @@ import {getDatabase} from "~/db/client"
 import {getSettings, setSettings} from "~/db/queries"
 import {defaultWindows} from "~/db/schema"
 import {settingsActionSchema} from "~/schemas/settings"
+import {createRelease} from "~/utils/sentry"
 
 import type {Route} from "./+types/settings"
 
@@ -242,6 +243,50 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                         </Button>
                     </div>
                 </fetcher.Form>
+
+                <section
+                    aria-labelledby="about-heading"
+                    className="mt-16 border-t pt-8"
+                >
+                    <h2
+                        className="mb-5 text-lg font-semibold"
+                        id="about-heading"
+                    >
+                        About
+                    </h2>
+
+                    <div className="flex items-start justify-between gap-4 text-sm text-muted-foreground">
+                        <a
+                            aria-label="Built by Brad Garropy"
+                            className="flex w-fit items-center gap-1.5 font-medium transition-colors hover:text-foreground"
+                            href="https://bradgarropy.com"
+                            rel="noreferrer"
+                            target="_blank"
+                        >
+                            <span>Built by</span>
+                            <span
+                                aria-hidden="true"
+                                className="size-5 bg-current [mask-image:url('/bg.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+                            />
+                        </a>
+
+                        <div className="flex flex-col items-end gap-1">
+                            <a
+                                className="flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
+                                href="https://github.com/bradgarropy/finance"
+                                rel="noreferrer"
+                                target="_blank"
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    className="size-4 bg-current [mask-image:url('/github.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+                                />
+                                GitHub
+                            </a>
+                            <span className="text-xs">{createRelease()}</span>
+                        </div>
+                    </div>
+                </section>
             </main>
         </>
     )
