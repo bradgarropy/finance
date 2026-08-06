@@ -45,7 +45,7 @@ const SnapshotDelta = ({change, favorableDirection}: SnapshotDeltaProps) => {
               : "text-rose-600"
 
     return (
-        <p className="mt-2 text-sm tabular-nums">
+        <p className="mt-1 text-xs tabular-nums sm:mt-2 sm:text-sm">
             <span className={color}>
                 {formatMoneyChange(change.amountCents)}
                 {change.percentage === null
@@ -116,8 +116,8 @@ const Route = ({loaderData}: Route.ComponentProps) => {
         <>
             <title>💵 finance | overview</title>
 
-            <main className="mx-auto w-full max-w-5xl py-8 sm:py-16">
-                <div className="mb-10 space-y-2">
+            <main className="mx-auto w-full min-w-0 max-w-5xl py-4 sm:py-16">
+                <div className="mb-8 space-y-2 sm:mb-10">
                     <h1 className="text-3xl font-bold">Overview</h1>
                     <p className="text-muted-foreground">
                         {latest ? (
@@ -140,13 +140,13 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                     <>
                         <section
                             aria-label="Latest financial snapshot"
-                            className="grid border-y sm:grid-cols-3 sm:divide-x"
+                            className="grid grid-cols-2 border-y sm:grid-cols-3 sm:divide-x"
                         >
-                            <div className="py-6 sm:px-6 sm:first:pl-0">
+                            <div className="py-5 pr-3 sm:px-6 sm:py-6 sm:first:pl-0">
                                 <p className="text-sm font-medium text-muted-foreground">
                                     Assets
                                 </p>
-                                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                                <p className="mt-2 whitespace-nowrap text-lg font-semibold tabular-nums sm:text-3xl">
                                     {formatMoney(latest.assetsCents)}
                                 </p>
                                 <SnapshotDelta
@@ -155,11 +155,11 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                 />
                             </div>
 
-                            <div className="border-t py-6 sm:border-t-0 sm:px-6">
+                            <div className="border-l py-5 pl-3 sm:border-l-0 sm:px-6 sm:py-6">
                                 <p className="text-sm font-medium text-muted-foreground">
                                     Liabilities
                                 </p>
-                                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                                <p className="mt-2 whitespace-nowrap text-lg font-semibold tabular-nums sm:text-3xl">
                                     {formatMoney(latest.liabilitiesCents)}
                                 </p>
                                 <SnapshotDelta
@@ -168,11 +168,11 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                 />
                             </div>
 
-                            <div className="border-t py-6 sm:border-t-0 sm:px-6 sm:last:pr-0">
+                            <div className="col-span-2 border-t py-5 sm:col-span-1 sm:border-t-0 sm:px-6 sm:py-6 sm:last:pr-0">
                                 <p className="text-sm font-medium text-muted-foreground">
                                     Net worth
                                 </p>
-                                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                                <p className="mt-2 text-2xl font-semibold tabular-nums sm:text-3xl">
                                     {formatMoney(latest.netWorthCents)}
                                 </p>
                                 <SnapshotDelta
@@ -183,7 +183,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                         </section>
 
                         <section
-                            className="mt-14"
+                            className="mt-10 min-w-0 sm:mt-14"
                             aria-labelledby="history-heading"
                         >
                             <div className="mb-6 space-y-1">

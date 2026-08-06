@@ -28,7 +28,10 @@ const groups = [
 
 const LatestAccountSnapshot = ({balances}: LatestAccountSnapshotProps) => {
     return (
-        <section aria-labelledby="latest-accounts-heading" className="mt-14">
+        <section
+            aria-labelledby="latest-accounts-heading"
+            className="mt-10 sm:mt-14"
+        >
             <div className="mb-6 space-y-1">
                 <h2
                     className="text-xl font-semibold"
@@ -41,7 +44,7 @@ const LatestAccountSnapshot = ({balances}: LatestAccountSnapshotProps) => {
                 </p>
             </div>
 
-            <div className="grid gap-12 sm:grid-cols-2 sm:gap-10">
+            <div className="grid gap-10 sm:grid-cols-2">
                 {groups.map(group => {
                     const groupBalances = balances.filter(
                         balance => balance.accountType === group.type,

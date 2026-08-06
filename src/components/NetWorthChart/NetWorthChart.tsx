@@ -53,7 +53,7 @@ const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
         <>
             <div
                 aria-label="History range"
-                className="mb-4 flex justify-end"
+                className="mb-4 flex max-w-full justify-start overflow-x-auto sm:justify-end"
                 role="group"
             >
                 {historyWindows.map(historyWindow => {
@@ -84,7 +84,7 @@ const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
 
             <ChartContainer
                 aria-label="Assets, liabilities, and net worth over time"
-                className="h-80 w-full sm:h-96"
+                className="h-64 min-w-0 w-full sm:h-96"
                 config={chartConfig}
                 role="img"
             >
@@ -108,7 +108,7 @@ const NetWorthChart = ({defaultWindow, snapshots}: NetWorthChartProps) => {
                         tickFormatter={formatCompactMoney}
                         tickLine={false}
                         tickMargin={8}
-                        width={64}
+                        width={52}
                     />
                     <ChartTooltip
                         content={
