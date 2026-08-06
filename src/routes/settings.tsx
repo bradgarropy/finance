@@ -273,7 +273,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                         <div className="flex flex-col items-end gap-1">
                             <a
                                 className="flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
-                                href="https://github.com/bradgarropy/finance"
+                                href="https://github.com/bradgarropy/wealth"
                                 rel="noreferrer"
                                 target="_blank"
                             >

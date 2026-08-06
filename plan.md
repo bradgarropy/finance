@@ -136,9 +136,9 @@ excess-checking calculation.
   navigation across desktop and mobile.
 - Repository information and the "Built by BG" credit live in Settings instead
   of a persistent footer.
-- The existing `finance` Worker, D1 database, production domain, and GitHub
-  repository names remain unchanged until separate infrastructure and repository
-  cutovers are approved.
+- The GitHub repository is `bradgarropy/wealth`. The existing `finance` Worker,
+  D1 database, and production domain remain unchanged until a separate
+  infrastructure cutover is approved.
 
 ### Data import, export, and seed
 
