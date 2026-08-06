@@ -45,8 +45,8 @@ const AccountBalanceChart = ({
         amountCents: {
             color:
                 accountType === "asset"
-                    ? "oklch(0.627 0.194 149.214)"
-                    : "oklch(0.645 0.246 16.439)",
+                    ? "var(--financial-positive)"
+                    : "var(--financial-negative)",
             label: "Balance",
         },
     } satisfies ChartConfig

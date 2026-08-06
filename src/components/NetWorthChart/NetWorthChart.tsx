@@ -24,11 +24,11 @@ import {
 
 const chartConfig = {
     assetsCents: {
-        color: "oklch(0.627 0.194 149.214)",
+        color: "var(--financial-positive)",
         label: "Assets",
     },
     liabilitiesCents: {
-        color: "oklch(0.645 0.246 16.439)",
+        color: "var(--financial-negative)",
         label: "Liabilities",
     },
     netWorthCents: {

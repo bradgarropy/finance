@@ -399,7 +399,7 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                         {fetcher.data?.error ? (
                             <p
                                 role="alert"
-                                className="text-center text-sm text-red-600"
+                                className="text-center text-sm text-destructive"
                             >
                                 {fetcher.data.error}
                             </p>
