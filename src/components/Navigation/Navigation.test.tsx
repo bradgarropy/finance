@@ -1,4 +1,4 @@
-import {render, screen} from "@testing-library/react"
+import {render, screen, within} from "@testing-library/react"
 import {MemoryRouter} from "react-router"
 import {expect, test} from "vitest"
 
@@ -11,10 +11,32 @@ test("renders", () => {
         </MemoryRouter>,
     )
 
-    expect(screen.getAllByRole("link").map(link => link.textContent)).toEqual([
-        "Overview",
-        "Accounts",
-        "Capture",
-        "Settings",
-    ])
+    const mobileNavigation = screen.getByRole("navigation", {
+        name: "Mobile navigation",
+    })
+    const desktopNavigation = screen.getByRole("navigation", {
+        name: "Desktop navigation",
+    })
+
+    expect(
+        within(mobileNavigation).getByRole("link", {name: "Overview"}),
+    ).toHaveAttribute("href", "/")
+    expect(
+        within(mobileNavigation).getByRole("link", {name: "Accounts"}),
+    ).toHaveAttribute("href", "/accounts")
+    expect(
+        within(mobileNavigation).getByRole("link", {name: "Capture"}),
+    ).toHaveAttribute("href", "/capture")
+
+    expect(
+        within(desktopNavigation).getByRole("link", {name: "Overview"}),
+    ).toHaveAttribute("href", "/")
+    expect(
+        within(desktopNavigation).getByRole("link", {name: "Accounts"}),
+    ).toHaveAttribute("href", "/accounts")
+    expect(
+        within(desktopNavigation).getByRole("link", {name: "New capture"}),
+    ).toHaveAttribute("href", "/capture")
+
+    expect(screen.getAllByRole("link", {name: "Settings"})).toHaveLength(2)
 })

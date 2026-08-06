@@ -5,10 +5,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-nav > a.active {
-    @apply underline decoration-purple-500 decoration-4 underline-offset-4;
-}
-
 @theme inline {
     --font-heading: var(--font-sans);
 

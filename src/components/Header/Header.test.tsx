@@ -11,5 +11,8 @@ test("renders", () => {
         </MemoryRouter>,
     )
 
-    expect(screen.getByText("finance")).toBeInTheDocument()
+    expect(screen.getByRole("link", {name: "finance"})).toHaveAttribute(
+        "href",
+        "/",
+    )
 })

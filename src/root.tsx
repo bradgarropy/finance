@@ -29,7 +29,7 @@ const App = () => {
             </head>
 
             <body className="relative bg-white text-black">
-                <div className="isolate grid min-h-screen grid-rows-[auto_1fr_auto]">
+                <div className="isolate grid min-h-screen grid-rows-[auto_1fr_auto] pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
                     <Header />
 
                     <div className="min-w-0 p-4 sm:p-8">
