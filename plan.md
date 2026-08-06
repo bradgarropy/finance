@@ -153,6 +153,9 @@ excess-checking calculation.
 - Account type badges distinguish assets and liabilities.
 - `/account/:accountId` shows account metadata and a sortable balance-history
   table.
+- Account summaries include an asset- or liability-colored balance chart above
+  the table with `4W`, `12W`, `26W`, `52W`, and `All` ranges. The configured
+  default window controls the chart's initial range.
 - Balance-history dates link to their matching capture summaries.
 
 ### Weekly capture workflow
@@ -298,9 +301,7 @@ npm run test:e2e
   deferred and should not be implemented as the automatic next feature.
 - Add growth-rate calculations and presentation only when they provide more
   value than the current prior-capture deltas and historical chart.
-- Do a later visualization pass for account-level charts and any additional
-  dashboard visualizations. Account graphs are intentionally excluded from the
-  current account-summary scope.
+- Do a later visualization pass for any additional dashboard visualizations.
 - Decide whether the emergency baseline should affect recommendations or remain
   reference-only.
 - After the spreadsheet-to-app migration is complete, repurpose or replace the

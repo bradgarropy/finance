@@ -34,7 +34,11 @@ const renderRoute = (routeBalances: Balance[]) => {
     const Stub = createRoutesStub([
         {
             Component: Route,
-            loader: () => ({account, balances: routeBalances}),
+            loader: () => ({
+                account,
+                balances: routeBalances,
+                defaultWindow: 52,
+            }),
             path: "/account/:accountId",
         },
     ])
@@ -52,6 +56,9 @@ test("shows account details and balance history", async () => {
     expect(screen.getByText(/liability/i)).toBeInTheDocument()
     expect(screen.getByText("credit")).toBeInTheDocument()
     expect(screen.getByText("Archived")).toBeInTheDocument()
+    expect(
+        screen.getByRole("img", {name: "Account balance over time"}),
+    ).toBeInTheDocument()
     expect(screen.getByRole("link", {name: "Accounts"})).toHaveAttribute(
         "href",
         "/accounts",
