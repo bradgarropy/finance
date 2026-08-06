@@ -1,4 +1,4 @@
-# Finance App Plan
+# Wealth App Plan
 
 Last updated: August 5, 2026
 
@@ -127,6 +127,18 @@ excess-checking calculation.
 - Query helpers cover account CRUD and archiving, account and capture history,
   settings, and account/balance upserts.
 - Sentry remains integrated for client, server, and Worker error reporting.
+
+### Branding and navigation
+
+- The user-facing product is named Wealth and uses the segmented signal mark,
+  Geist wordmark, and canonical red and green brand colors.
+- The responsive header provides Overview, Accounts, Capture, and Settings
+  navigation across desktop and mobile.
+- Repository information and the "Built by BG" credit live in Settings instead
+  of a persistent footer.
+- The existing `finance` Worker, D1 database, production domain, and GitHub
+  repository names remain unchanged until separate infrastructure and repository
+  cutovers are approved.
 
 ### Data import, export, and seed
 
@@ -290,10 +302,6 @@ npm run test:e2e
 
 ### Product work
 
-- Refresh the shared header with intentional finance branding and improved
-  navigation behavior across desktop and mobile.
-- Replace the placeholder footer with a GitHub repository link and a compact
-  "Built by BG" credit.
 - Explore click-to-copy behavior for displayed balances. It should be available
   wherever copying a value is useful, provide accessible success feedback, and
   avoid making ordinary account links or table interactions noisy.

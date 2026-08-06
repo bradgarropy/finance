@@ -1,6 +1,6 @@
-# 💵 finance
+# wealth
 
-_A [React Router][react-router] starter with [ESLint][eslint], [Prettier][prettier], [TypeScript][typescript], [Vitest][vitest], and [Tailwind][tailwind] included._
+_A private, guided personal finance app built with [React Router][react-router], [Cloudflare][cloudflare], and TypeScript._
 
 [![cloudflare][cloudflare-badge]][cloudflare]
 [![github actions][github-actions-badge]][github-actions]
@@ -11,7 +11,7 @@ _A [React Router][react-router] starter with [ESLint][eslint], [Prettier][pretti
 
 <p align="center">
     <a href="https://finance.bradgarropy.workers.dev">
-        <img alt="finance" src="./public/github.png" width="800">
+        <img alt="wealth" src="./public/github.png" width="800">
     </a>
 </p>
 

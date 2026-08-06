@@ -67,7 +67,7 @@ const AccountDialog = ({account, onOpenChange, open}: AccountDialogProps) => {
                         </DialogTitle>
                         <DialogDescription>
                             {account
-                                ? "Update how this account appears in finance."
+                                ? "Update how this account appears in wealth."
                                 : "Add an account to future balance captures."}
                         </DialogDescription>
                     </DialogHeader>

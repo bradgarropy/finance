@@ -45,5 +45,5 @@ test("renders the current settings", async () => {
         "href",
         "https://github.com/bradgarropy/finance",
     )
-    expect(screen.getByText("finance@0.0.1")).toBeInTheDocument()
+    expect(screen.getByText("wealth@0.0.1")).toBeInTheDocument()
 })
