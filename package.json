@@ -1,7 +1,7 @@
 {
     "name": "wealth",
     "version": "0.0.1",
-    "description": "A guided personal finance app.",
+    "description": "💵 wealth",
     "type": "module",
     "keywords": [
         "typescript",
