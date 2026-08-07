@@ -15,9 +15,9 @@
         "tailwind",
         "hacktoberfest"
     ],
-    "homepage": "https://github.com/bradgarropy/finance",
+    "homepage": "https://github.com/bradgarropy/wealth",
     "bugs": {
-        "url": "https://github.com/bradgarropy/finance/issues"
+        "url": "https://github.com/bradgarropy/wealth/issues"
     },
     "license": "MIT",
     "author": {
@@ -27,7 +27,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/bradgarropy/finance"
+        "url": "https://github.com/bradgarropy/wealth"
     },
     "scripts": {
         "dev": "react-router dev",

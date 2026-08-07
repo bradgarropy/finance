@@ -43,7 +43,7 @@ test("renders the current settings", async () => {
     ).toHaveAttribute("href", "https://bradgarropy.com")
     expect(screen.getByRole("link", {name: "GitHub"})).toHaveAttribute(
         "href",
-        "https://github.com/bradgarropy/finance",
+        "https://github.com/bradgarropy/wealth",
     )
     expect(screen.getByText("wealth@0.0.1")).toBeInTheDocument()
 })
