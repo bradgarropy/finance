@@ -32,8 +32,8 @@
     "scripts": {
         "dev": "react-router dev",
         "build": "react-router build",
-        "start": "npm run build && wrangler dev",
-        "preview": "npm run build && wrangler dev",
+        "start": "npm run build && wrangler dev --local",
+        "preview": "npm run build && wrangler dev --local",
         "deploy": "npm run db:migrate:prod && wrangler deploy",
         "db:migrate": "wrangler d1 migrations apply DB --local",
         "db:migrate:prod": "wrangler d1 migrations apply DB --remote",
