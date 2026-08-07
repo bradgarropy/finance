@@ -1,6 +1,6 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "finance",
+    "name": "wealth",
     "compatibility_date": "2025-10-08",
     "compatibility_flags": ["nodejs_compat"],
     "keep_vars": true,
@@ -8,7 +8,7 @@
     "workers_dev": false,
     "routes": [
         {
-            "pattern": "finance.bradgarropy.com",
+            "pattern": "wealth.bradgarropy.com",
             "custom_domain": true,
         },
     ],

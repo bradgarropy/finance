@@ -10,7 +10,7 @@ _A private, guided personal finance app built with [React Router][react-router],
 [![discord][discord-badge]][discord]
 
 <p align="center">
-    <a href="https://finance.bradgarropy.workers.dev">
+    <a href="https://wealth.bradgarropy.com">
         <img alt="wealth" src="./public/github.png" width="800">
     </a>
 </p>
@@ -31,7 +31,7 @@ _A private, guided personal finance app built with [React Router][react-router],
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-[cloudflare]: https://dash.cloudflare.com/b70a6ce696a1cb0e9055f8213f4146ee/workers/services/view/finance/production
+[cloudflare]: https://dash.cloudflare.com/b70a6ce696a1cb0e9055f8213f4146ee/workers/services/view/wealth/production
 [cloudflare-badge]: https://img.shields.io/badge/cloudflare-workers-orange?style=flat-square&logo=cloudflare
 [github-actions]: https://github.com/bradgarropy/wealth/actions
 [github-actions-badge]: https://img.shields.io/github/actions/workflow/status/bradgarropy/wealth/ci.yml?branch=main&label=github&logo=github&style=flat-square

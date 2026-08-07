@@ -1,11 +1,11 @@
 # Wealth App Plan
 
-Last updated: August 5, 2026
+Last updated: August 7, 2026
 
 ## Product goal
 
 Replace the manual Numbers workflow with a private web app at
-`finance.bradgarropy.com`. The app should make the weekly finance routine feel
+`wealth.bradgarropy.com`. The app should make the weekly finance routine feel
 guided while preserving enough history and drill-down detail to verify the
 numbers when needed.
 
@@ -23,11 +23,12 @@ The core weekly workflow is:
 
 - Cloudflare Access is the only authentication layer. Access is restricted at
   the edge to `bradgarropy@gmail.com` and `gabrielagarropy@gmail.com`.
-- `workers_dev` remains disabled. Do not add another route or domain without an
+- `workers_dev` remains disabled. Do not deploy a route or domain without an
   equivalent Access policy.
 - If an ungated route is ever introduced, restore in-Worker Access JWT
   validation so requests fail closed.
-- The app deploys as a Cloudflare Worker at `finance.bradgarropy.com`.
+- The app deploys as the `wealth` Cloudflare Worker at
+  `wealth.bradgarropy.com`.
 - Production deploys run remote D1 migrations first through `npm run deploy`,
   then run `wrangler deploy`. The Cloudflare Dashboard uses this script as its
   deploy command.
@@ -136,9 +137,9 @@ excess-checking calculation.
   navigation across desktop and mobile.
 - Repository information and the "Built by BG" credit live in Settings instead
   of a persistent footer.
-- The GitHub repository is `bradgarropy/wealth`. The existing `finance` Worker,
-  D1 database, and production domain remain unchanged until a separate
-  infrastructure cutover is approved.
+- The GitHub repository and Cloudflare Worker are named `wealth`. The existing
+  D1 database retains its original `finance` resource name and database ID,
+  exposed to application code through the stable `DB` binding.
 
 ### Data import, export, and seed
 
@@ -320,6 +321,11 @@ npm run test:e2e
 
 ### Production cutover and operations
 
+- Verify that `wealth.bradgarropy.com` is protected by Cloudflare Access and
+  only Brad and Gabriela can authenticate.
+- Keep the existing D1 database and UUID. Renaming it would require an
+  unnecessary production-data migration; application code uses the `DB`
+  binding instead of its Cloudflare resource name.
 - Confirm whether the historical workbook has been imported into remote D1.
   Until that is explicitly confirmed, treat remote historical import as
   pending.
