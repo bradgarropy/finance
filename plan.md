@@ -137,9 +137,8 @@ excess-checking calculation.
   navigation across desktop and mobile.
 - Repository information and the "Built by BG" credit live in Settings instead
   of a persistent footer.
-- The GitHub repository and Cloudflare Worker are named `wealth`. The existing
-  D1 database retains its original `finance` resource name and database ID,
-  exposed to application code through the stable `DB` binding.
+- The GitHub repository, Cloudflare Worker, and D1 database are named `wealth`.
+  Application code accesses D1 through the stable `DB` binding.
 
 ### Data import, export, and seed
 
@@ -323,12 +322,11 @@ npm run test:e2e
 
 - Verify that `wealth.bradgarropy.com` is protected by Cloudflare Access and
   only Brad and Gabriela can authenticate.
-- Keep the existing D1 database and UUID. Renaming it would require an
-  unnecessary production-data migration; application code uses the `DB`
-  binding instead of its Cloudflare resource name.
-- Confirm whether the historical workbook has been imported into remote D1.
-  Until that is explicitly confirmed, treat remote historical import as
-  pending.
+- Apply the existing migrations to the new `wealth` D1 database and migrate or
+  re-import the production data before relying on the renamed deployment.
+- Keep the old `finance` D1 database available as a rollback source until the
+  new database's schema, settings, accounts, captures, and representative totals
+  have been verified.
 - Before the final spreadsheet-to-app cutover, export a remote backup and verify
   representative capture totals against the workbook one last time.
 - Reconfirm Cloudflare Access after routing, domain, or deployment changes.

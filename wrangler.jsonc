@@ -25,8 +25,8 @@
     "d1_databases": [
         {
             "binding": "DB",
-            "database_name": "finance",
-            "database_id": "7103234a-c35a-4956-9305-4490dea6b7b6",
+            "database_name": "wealth",
+            "database_id": "7f5ac2f2-8924-4120-b261-32573ac9594b",
             "migrations_dir": "src/db/migrations",
         },
     ],
