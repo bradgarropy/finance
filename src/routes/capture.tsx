@@ -1,5 +1,10 @@
 import {Field} from "@base-ui/react/field"
-import {ArrowRightIcon, CircleCheckIcon} from "lucide-react"
+import {
+    ArrowRightIcon,
+    CheckIcon,
+    CircleCheckIcon,
+    CopyIcon,
+} from "lucide-react"
 import {useEffect, useState} from "react"
 import {data, Link, useFetcher} from "react-router"
 
@@ -24,6 +29,53 @@ import type {Route} from "./+types/capture"
 
 const formatBalance = (value: number | null) => {
     return value === null ? "-" : formatMoney(Math.round(value * 100))
+}
+
+type CopyTransferAmountProps = {
+    amountCents: number
+    label: string
+}
+
+const CopyTransferAmount = ({amountCents, label}: CopyTransferAmountProps) => {
+    const [copied, setCopied] = useState(false)
+    const amount = formatMoney(amountCents)
+
+    useEffect(() => {
+        if (!copied) return
+
+        const timeout = window.setTimeout(() => setCopied(false), 2_000)
+
+        return () => window.clearTimeout(timeout)
+    }, [copied])
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText((amountCents / 100).toFixed(2))
+        setCopied(true)
+    }
+
+    return (
+        <>
+            <Button
+                aria-label={`Copy ${amount} transfer to ${label}`}
+                className="ml-auto -mr-2 text-base font-normal tabular-nums"
+                size="sm"
+                title={`Copy ${amount}`}
+                type="button"
+                variant="ghost"
+                onClick={handleCopy}
+            >
+                {amount}
+                {copied ? (
+                    <CheckIcon aria-hidden="true" />
+                ) : (
+                    <CopyIcon aria-hidden="true" />
+                )}
+            </Button>
+            <span aria-live="polite" className="sr-only">
+                {copied ? `${amount} copied` : ""}
+            </span>
+        </>
+    )
 }
 
 export const action = async ({context, request}: Route.ActionArgs) => {
@@ -505,10 +557,9 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                     const checkboxId = `transfer-${transfer.id}`
 
                                     return (
-                                        <label
+                                        <div
                                             key={transfer.id}
-                                            className="flex cursor-pointer items-center gap-3 py-4"
-                                            htmlFor={checkboxId}
+                                            className="flex items-center gap-3 py-3.5"
                                         >
                                             <Checkbox
                                                 checked={
@@ -527,7 +578,10 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                                     )
                                                 }
                                             />
-                                            <span className="flex min-w-0 items-center gap-2 font-medium">
+                                            <label
+                                                className="flex min-w-0 cursor-pointer items-center gap-2 font-medium"
+                                                htmlFor={checkboxId}
+                                            >
                                                 <span>Checking</span>
                                                 <ArrowRightIcon
                                                     aria-hidden="true"
@@ -537,13 +591,14 @@ const Route = ({loaderData}: Route.ComponentProps) => {
                                                 <Badge variant="secondary">
                                                     {transfer.percentage}%
                                                 </Badge>
-                                            </span>
-                                            <span className="ml-auto tabular-nums">
-                                                {formatMoney(
-                                                    transfer.amountCents,
-                                                )}
-                                            </span>
-                                        </label>
+                                            </label>
+                                            <CopyTransferAmount
+                                                amountCents={
+                                                    transfer.amountCents
+                                                }
+                                                label={transfer.label}
+                                            />
+                                        </div>
                                     )
                                 })}
                             </div>
