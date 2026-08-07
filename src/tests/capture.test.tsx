@@ -187,9 +187,22 @@ test("continues from saved balances through the weekly workflow", async () => {
     expect(screen.getByText("$64.50")).toBeInTheDocument()
 
     const finishButton = screen.getByRole("button", {name: "Finish"})
+    const investmentCheckbox = screen.getByRole("checkbox", {
+        name: /Investments/,
+    })
+
+    await user.click(
+        screen.getByRole("button", {
+            name: "Copy $193.50 transfer to Investments",
+        }),
+    )
+
+    expect(await navigator.clipboard.readText()).toBe("193.50")
+    expect(screen.getByText("$193.50 copied")).toBeInTheDocument()
+    expect(investmentCheckbox).not.toBeChecked()
 
     expect(finishButton).toBeDisabled()
-    await user.click(screen.getByRole("checkbox", {name: /Investments/}))
+    await user.click(investmentCheckbox)
     await user.click(screen.getByRole("checkbox", {name: /Savings/}))
     expect(finishButton).toBeEnabled()
     await user.click(finishButton)
