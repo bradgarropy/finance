@@ -28,6 +28,7 @@
             "database_name": "wealth",
             "database_id": "7f5ac2f2-8924-4120-b261-32573ac9594b",
             "migrations_dir": "src/db/migrations",
+            "remote": true,
         },
     ],
 }

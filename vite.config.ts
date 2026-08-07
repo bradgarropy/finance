@@ -19,7 +19,13 @@ const config = defineConfig({
         reactRouterDevTools(),
         ...(process.env.VITEST
             ? [react()]
-            : [cloudflare({viteEnvironment: {name: "ssr"}}), reactRouter()]),
+            : [
+                  cloudflare({
+                      remoteBindings: false,
+                      viteEnvironment: {name: "ssr"},
+                  }),
+                  reactRouter(),
+              ]),
         process.env.SENTRY_AUTH_TOKEN
             ? sentry({
                   authToken: process.env.SENTRY_AUTH_TOKEN,
